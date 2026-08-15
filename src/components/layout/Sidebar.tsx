@@ -50,8 +50,9 @@ export default function Sidebar({ className }: { className?: string }) {
           onClick={() => setSidebarOpen(false)}
           className="flex items-center gap-3 group"
         >
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#4F6EF7] to-[#3B55D4] flex items-center justify-center shadow-md shadow-[#4F6EF7]/20 group-hover:scale-105 transition-transform">
-            <GraduationCap className="w-5 h-5 text-white" />
+          <div className="w-9 h-9 rounded-lg bg-[#0F1117] border border-[#2D3148] flex items-center justify-center p-1 group-hover:scale-105 transition-transform overflow-hidden">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="BVM Logo" className="w-full h-full object-contain" />
           </div>
           <div>
             <h2 className="font-bold text-white font-display leading-tight tracking-tight text-base">

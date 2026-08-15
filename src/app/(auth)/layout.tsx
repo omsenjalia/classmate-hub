@@ -15,8 +15,9 @@ export default function AuthLayout({
       {/* Brand Header */}
       <div className="mb-8 text-center z-10">
         <Link href="/" className="inline-flex items-center gap-3 group">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#4F6EF7] to-[#3B55D4] flex items-center justify-center shadow-lg shadow-[#4F6EF7]/20 group-hover:scale-105 transition-transform">
-            <GraduationCap className="w-6 h-6 text-white" />
+          <div className="w-12 h-12 rounded-xl bg-[#0F1117] border border-[#2D3148] flex items-center justify-center p-1.5 shadow-lg shadow-black/40 group-hover:scale-105 transition-transform overflow-hidden">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.png" alt="BVM Logo" className="w-full h-full object-contain" />
           </div>
           <div className="text-left">
             <h1 className="text-2xl font-bold font-display tracking-tight text-white">ClassmateHub</h1>
