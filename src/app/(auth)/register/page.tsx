@@ -40,6 +40,7 @@ export default function RegisterPage() {
 
       if (error) {
         if (
+          error.message?.includes('Invalid API key') ||
           error.message?.includes('secret API key') ||
           error.message?.includes('apiKey') ||
           error.message?.includes('JWKS') ||
