@@ -17,16 +17,34 @@ CREATE TABLE IF NOT EXISTS profiles (
   created_at   TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Auto-create profile on signup
+-- Auto-create profile on signup safely without unique_violation errors
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
+DECLARE
+  base_username TEXT;
+  final_username TEXT;
+  counter INT := 1;
 BEGIN
-  INSERT INTO profiles (id, username, display_name)
+  base_username := lower(coalesce(NEW.raw_user_meta_data->>'username', split_part(NEW.email, '@', 1)));
+  final_username := base_username;
+
+  -- Handle duplicate username collisions gracefully
+  WHILE EXISTS (SELECT 1 FROM public.profiles WHERE username = final_username) LOOP
+    final_username := base_username || counter;
+    counter := counter + 1;
+  END LOOP;
+
+  INSERT INTO public.profiles (id, username, display_name, role)
   VALUES (
     NEW.id,
-    COALESCE(NEW.raw_user_meta_data->>'username', split_part(NEW.email, '@', 1)),
-    COALESCE(NEW.raw_user_meta_data->>'display_name', split_part(NEW.email, '@', 1))
-  );
+    final_username,
+    coalesce(NEW.raw_user_meta_data->>'display_name', split_part(NEW.email, '@', 1)),
+    'student'
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    username = EXCLUDED.username,
+    display_name = EXCLUDED.display_name;
+
   RETURN NEW;
 END;
 $$;
