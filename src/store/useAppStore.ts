@@ -25,8 +25,8 @@ interface AppState {
 }
 
 export const useAppStore = create<AppState>((set) => ({
-  user: MOCK_USER, // Default to demo admin profile for instant usability
-  isLoggedIn: true,
+  user: null,
+  isLoggedIn: false,
   subjects: MOCK_SUBJECTS,
   channels: MOCK_CHANNELS,
   activeChannelId: 'chan-gen',
