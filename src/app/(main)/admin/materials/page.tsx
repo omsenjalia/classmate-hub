@@ -26,7 +26,7 @@ import {
   Eye,
   EyeOff,
   Trash2,
-  HardDrive,
+  GitBranch,
   FolderKanban,
   FileText,
   Video,
@@ -127,7 +127,7 @@ export default function AdminMaterialsPage() {
   )
 
   const totalBytesUsed = items.reduce((acc, curr) => acc + (curr.file_size_bytes || 0), 0)
-  const freeTierLimitBytes = 10 * 1024 * 1024 * 1024 // 10GB Cloudflare R2 Free Tier
+  const freeTierLimitBytes = 100 * 1024 * 1024 * 1024 // 100GB GitHub Storage Soft Limit
   const usedPercentage = Math.min(100, Math.max(1, (totalBytesUsed / freeTierLimitBytes) * 100))
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -164,18 +164,18 @@ export default function AdminMaterialsPage() {
           <FolderKanban className="w-6 h-6 text-amber-400" /> Admin Materials & Storage Dashboard
         </h1>
         <p className="text-sm text-[#8B91A8] mt-1">
-          Control custom sort ordering, toggle material visibility, and monitor Cloudflare R2 storage usage.
+          Control custom sort ordering, toggle material visibility, and monitor GitHub Storage Engine.
         </p>
       </div>
 
-      {/* StorageUsageBar Component */}
+      {/* GitHub Storage Usage Bar */}
       <div className="bg-[#1A1D27] border border-[#2D3148] rounded-2xl p-6 space-y-3">
         <div className="flex items-center justify-between text-xs font-mono">
           <div className="flex items-center gap-2 text-white font-bold">
-            <HardDrive className="w-4 h-4 text-[#4F6EF7]" /> Cloudflare R2 Storage Monitor
+            <GitBranch className="w-4 h-4 text-[#4F6EF7]" /> Private GitHub Storage Engine (omsenjalia/classmate-hub-storage)
           </div>
           <span className="text-[#8B91A8]">
-            {formatBytes(totalBytesUsed)} used / 10.0 GB Free Tier
+            {formatBytes(totalBytesUsed)} used / 100.0 GB Capacity
           </span>
         </div>
 
@@ -188,8 +188,8 @@ export default function AdminMaterialsPage() {
 
         <div className="flex items-center justify-between text-[11px] text-[#8B91A8] font-mono">
           <span>0 GB</span>
-          <span>{usedPercentage.toFixed(2)}% used</span>
-          <span>10 GB Cap</span>
+          <span>Automatic chunking (&gt;99MB) enabled</span>
+          <span>100 GB Limit</span>
         </div>
       </div>
 

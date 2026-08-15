@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { deleteFromR2 } from '@/lib/r2'
+import { deleteFileFromGithub } from '@/lib/github-storage'
 import { createClient } from '@/lib/supabase/server'
 
 export async function DELETE(
@@ -46,11 +46,11 @@ export async function DELETE(
       // Fallback
     }
 
-    // Delete from Cloudflare R2
+    // Delete from Private GitHub Repository
     try {
-      await deleteFromR2(fullKey)
+      await deleteFileFromGithub(fullKey)
     } catch {
-      // If R2 credentials are placeholders, ignore R2 network errors
+      // Ignore network errors
     }
 
     return NextResponse.json({ success: true, key: fullKey })
