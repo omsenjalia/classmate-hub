@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import {
   MOCK_ANNOUNCEMENTS,
@@ -8,6 +8,13 @@ import {
   MOCK_EVENTS,
   MOCK_POLLS,
 } from '@/lib/mock-data'
+import {
+  fetchLiveAnnouncements,
+  fetchLiveMaterials,
+  fetchLiveEvents,
+  fetchLivePolls,
+} from '@/lib/supabase-data'
+import { Announcement, Material, EventItem, Poll } from '@/lib/types'
 import { SYLLABUS_PDFS } from '@/lib/constants'
 import { formatDate, formatRelativeTime, formatBytes, getSubjectColor } from '@/lib/utils'
 import {
@@ -30,10 +37,26 @@ import {
 import toast from 'react-hot-toast'
 
 export default function DashboardPage() {
-  const [announcements] = useState(MOCK_ANNOUNCEMENTS)
-  const [materials] = useState(MOCK_MATERIALS)
-  const [events] = useState(MOCK_EVENTS)
-  const [polls, setPolls] = useState(MOCK_POLLS)
+  const [announcements, setAnnouncements] = useState<Announcement[]>(MOCK_ANNOUNCEMENTS)
+  const [materials, setMaterials] = useState<Material[]>(MOCK_MATERIALS)
+  const [events, setEvents] = useState<EventItem[]>(MOCK_EVENTS)
+  const [polls, setPolls] = useState<Poll[]>(MOCK_POLLS)
+
+  useEffect(() => {
+    async function loadData() {
+      const [annData, matData, evtData, pollData] = await Promise.all([
+        fetchLiveAnnouncements(),
+        fetchLiveMaterials(),
+        fetchLiveEvents(),
+        fetchLivePolls(),
+      ])
+      setAnnouncements(annData)
+      setMaterials(matData)
+      setEvents(evtData)
+      setPolls(pollData)
+    }
+    loadData()
+  }, [])
 
   const handleQuickVote = (pollId: string, optionIndex: number) => {
     setPolls((prev) =>
@@ -135,7 +158,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left 2 Columns: Materials Feed & Active Polls */}
         <div className="lg:col-span-2 space-y-8">
-          {/* Recent Materials */}
+          {/* Recent Materials Feed */}
           <section className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold font-display text-white flex items-center gap-2">
@@ -147,7 +170,7 @@ export default function DashboardPage() {
             </div>
 
             <div className="space-y-3">
-              {materials.map((item) => (
+              {materials.slice(0, 5).map((item) => (
                 <div
                   key={item.id}
                   className="bg-[#1A1D27] border border-[#2D3148] hover:border-[#4F6EF7]/40 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all hover:bg-[#1A1D27]/80"
