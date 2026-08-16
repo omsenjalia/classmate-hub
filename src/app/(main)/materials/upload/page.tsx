@@ -6,6 +6,7 @@ import { useDropzone, FileRejection } from 'react-dropzone'
 import { useAppStore } from '@/store/useAppStore'
 import { MAX_FILE_SIZE_BYTES } from '@/lib/constants'
 import { formatBytes } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/client'
 import {
   Upload,
   FileText,
@@ -96,94 +97,114 @@ export default function MaterialUploadPage() {
         else if (['zip', 'rar'].includes(ext)) detectedFileType = 'zip'
         else detectedFileType = 'docx'
 
-        // 1. Get presigned URL from API
-        const presignRes = await fetch('/api/upload/presign', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            fileName: file.name,
-            contentType: file.type || 'application/octet-stream',
-            fileSize: file.size,
-          }),
-        })
+        // 1. Try R2 presigned upload first
+        let r2Success = false
+        try {
+          const presignRes = await fetch('/api/upload/presign', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              fileName: file.name,
+              contentType: file.type || 'application/octet-stream',
+              fileSize: file.size,
+            }),
+          })
 
-        if (!presignRes.ok) {
-          throw new Error('Failed to obtain presigned upload URL')
+          if (presignRes.ok) {
+            const { presignedUrl, key, publicUrl } = await presignRes.json()
+
+            // Upload directly to R2 with progress tracking
+            const r2Result = await new Promise<boolean>((resolve) => {
+              const xhr = new XMLHttpRequest()
+              xhr.open('PUT', presignedUrl, true)
+              xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream')
+
+              xhr.upload.onprogress = (evt) => {
+                if (evt.lengthComputable) {
+                  const percent = Math.round((evt.loaded / evt.total) * 90) // reserve last 10% for DB save
+                  setUploadProgress(percent)
+                }
+              }
+
+              xhr.onload = () => {
+                if (xhr.status === 200 || xhr.status === 204) {
+                  finalFileUrl = publicUrl
+                  finalFileKey = key
+                  resolve(true)
+                } else {
+                  resolve(false)
+                }
+              }
+
+              xhr.onerror = () => resolve(false)
+              xhr.send(file)
+            })
+
+            r2Success = r2Result
+          }
+        } catch {
+          // R2 not configured or failed — fall through to GitHub storage
         }
 
-        const { presignedUrl, key, publicUrl } = await presignRes.json()
+        // 2. Fallback: upload via GitHub storage API
+        if (!r2Success) {
+          setUploadProgress(20)
+          const formData = new FormData()
+          formData.append('file', file)
 
-        // 2. Upload directly to Cloudflare R2 using XMLHttpRequest for real-time progress
-        await new Promise((resolve, reject) => {
-          const xhr = new XMLHttpRequest()
-          xhr.open('PUT', presignedUrl, true)
-          xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream')
+          const githubRes = await fetch('/api/upload/github', {
+            method: 'POST',
+            body: formData,
+          })
 
-          xhr.upload.onprogress = (evt) => {
-            if (evt.lengthComputable) {
-              const percent = Math.round((evt.loaded / evt.total) * 100)
-              setUploadProgress(percent)
-            }
+          if (!githubRes.ok) {
+            const errData = await githubRes.json().catch(() => ({}))
+            throw new Error(errData.error || 'File upload failed. Please try again.')
           }
 
-          xhr.onload = () => {
-            if (xhr.status === 200 || xhr.status === 204) {
-              resolve(true)
-            } else {
-              // Direct upload simulation if R2 endpoint is placeholder
-              setUploadProgress(100)
-              resolve(true)
-            }
-          }
-
-          xhr.onerror = () => {
-            // Graceful fallback for local development preview without live credentials
-            setUploadProgress(100)
-            resolve(true)
-          }
-
-          void reject // keep the type checker happy
-          xhr.send(file)
-        })
-
-        finalFileUrl = publicUrl
-        finalFileKey = key
+          const githubData = await githubRes.json()
+          finalFileUrl = githubData.publicUrl
+          finalFileKey = githubData.key
+          setUploadProgress(85)
+        }
       }
 
-      // Create new material object
+      // 3. Save material metadata to Supabase
       const tags = tagsInput
         .split(',')
         .map((t) => t.trim().toLowerCase())
         .filter(Boolean)
 
-      const selectedSubject = subjects.find((s) => s.id === subjectId)
-      const selectedLab = availableLabs.find((l) => l.id === labId)
+      const supabase = createClient()
+      const { data: inserted, error: insertError } = await supabase
+        .from('materials')
+        .insert({
+          title: title.trim(),
+          description: description.trim() || null,
+          file_url: finalFileUrl,
+          file_key: finalFileKey,
+          file_name: file?.name || null,
+          file_type: detectedFileType,
+          file_size_bytes: file?.size || null,
+          video_url: mode === 'video' ? videoUrl.trim() : null,
+          subject_id: subjectId || null,
+          lab_id: labId || null,
+          tags: tags.length > 0 ? tags : null,
+          uploaded_by: user?.id || null,
+          sort_order: 0,
+          is_hidden: false,
+          download_count: 0,
+        })
+        .select('id')
+        .single()
 
-      const newMaterial = {
-        id: 'mat-' + Date.now(),
-        title: title.trim(),
-        description: description.trim() || null,
-        file_url: finalFileUrl || (mode === 'file' ? 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf' : null),
-        file_key: finalFileKey || (mode === 'file' ? `demo/${file?.name}` : null),
-        file_name: file?.name || null,
-        file_type: detectedFileType,
-        file_size_bytes: file?.size || null,
-        video_url: mode === 'video' ? videoUrl.trim() : null,
-        subject_id: subjectId || null,
-        lab_id: labId || null,
-        tags: tags.length > 0 ? tags : null,
-        uploaded_by: user?.id || null,
-        sort_order: 1,
-        is_hidden: false,
-        download_count: 0,
-        created_at: new Date().toISOString(),
-        profiles: user,
-        subjects: selectedSubject || null,
-        labs: selectedLab ? { ...selectedLab, created_at: new Date().toISOString() } : null,
+      if (insertError || !inserted) {
+        throw new Error(insertError?.message || 'Failed to save material to database')
       }
 
+      setUploadProgress(100)
       toast.success('Material published successfully!')
-      router.push(`/materials/${newMaterial.id}`)
+      router.push(`/materials/${inserted.id}`)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Upload failed'
       toast.error(msg)

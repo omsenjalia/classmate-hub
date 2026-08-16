@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/useAppStore'
 import { Material } from '@/lib/types'
 import { formatDate, formatBytes, getSubjectColor } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/client'
 import VideoEmbed from '@/components/materials/VideoEmbed'
 import {
   Download,
@@ -17,6 +18,7 @@ import {
   Share2,
   Calendar,
   Eye,
+  Loader2,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -30,13 +32,52 @@ export default function MaterialDetailPage({
   const { user } = useAppStore()
 
   const [material, setMaterial] = useState<Material | null>(null)
+  const [loading, setLoading] = useState(true)
   const [downloadCount, setDownloadCount] = useState(0)
 
   useEffect(() => {
-    // In production this would fetch from Supabase by ID
-    // For now we show a not-found state since there's no local store of materials
-    setMaterial(null)
+    async function fetchMaterial() {
+      setLoading(true)
+      try {
+        const supabase = createClient()
+        const { data, error } = await supabase
+          .from('materials')
+          .select('*, profiles(*), subjects(*), labs(*)')
+          .eq('id', resolvedParams.id)
+          .single()
+
+        if (error || !data) {
+          setMaterial(null)
+        } else {
+          setMaterial(data as Material)
+          setDownloadCount(data.download_count || 0)
+        }
+      } catch {
+        setMaterial(null)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchMaterial()
   }, [resolvedParams.id])
+
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-200">
+        <Link
+          href="/materials"
+          className="inline-flex items-center gap-2 text-xs font-mono text-muted hover:text-primary transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" /> Back to Materials List
+        </Link>
+        <div className="bg-card border border-border rounded-2xl p-16 text-center space-y-4">
+          <Loader2 className="w-8 h-8 animate-spin text-indigo-500 mx-auto" />
+          <p className="text-sm text-muted">Loading material...</p>
+        </div>
+      </div>
+    )
+  }
 
   if (!material) {
     return (
@@ -71,9 +112,17 @@ export default function MaterialDetailPage({
   const isAdmin = user?.role === 'admin'
   const canDelete = isOwner || isAdmin
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     setDownloadCount((prev) => prev + 1)
     toast.success('Download started!')
+
+    // Increment download count in Supabase (fire-and-forget)
+    const supabase = createClient()
+    supabase
+      .from('materials')
+      .update({ download_count: downloadCount + 1 })
+      .eq('id', material.id)
+      .then(() => {})
 
     if (material.file_url) {
       window.open(material.file_url, '_blank')
@@ -86,8 +135,18 @@ export default function MaterialDetailPage({
     if (!confirm('Are you sure you want to delete this material?')) return
 
     try {
+      // Delete from Supabase
+      const supabase = createClient()
+      const { error } = await supabase
+        .from('materials')
+        .delete()
+        .eq('id', material.id)
+
+      if (error) throw new Error(error.message)
+
+      // Also attempt to clean up the stored file
       if (material.file_key) {
-        await fetch(`/api/upload/${material.file_key}`, { method: 'DELETE' })
+        await fetch(`/api/upload/${material.file_key}`, { method: 'DELETE' }).catch(() => {})
       }
 
       toast.success('Material deleted')

@@ -38,10 +38,18 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               try {
-                const stored = localStorage.getItem('classmatehub-theme');
+                // Read from both storage keys: direct key and Zustand persist key
+                const direct = localStorage.getItem('classmatehub-theme');
+                let fromSession = null;
+                try {
+                  const session = JSON.parse(localStorage.getItem('classmatehub-session') || '{}');
+                  fromSession = session?.state?.theme || null;
+                } catch(e) {}
                 const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                const theme = stored || (prefersDark ? 'dark' : 'light');
+                const theme = direct || fromSession || (prefersDark ? 'dark' : 'light');
                 document.documentElement.classList.toggle('dark', theme === 'dark');
+                // Keep both storage keys in sync
+                if (theme) localStorage.setItem('classmatehub-theme', theme);
               } catch(e) {}
             `,
           }}
