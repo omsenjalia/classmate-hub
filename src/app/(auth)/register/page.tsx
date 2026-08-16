@@ -8,6 +8,13 @@ import { useAppStore } from '@/store/useAppStore'
 import { User, Mail, Lock, UserCheck, ArrowRight, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
+const ALLOWED_EMAIL_DOMAIN = '@bvmengineering.ac.in'
+
+function isSupabaseConfigured(): boolean {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+  return !!url && !url.includes('placeholder')
+}
+
 export default function RegisterPage() {
   const router = useRouter()
   const setUser = useAppStore((state) => state.setUser)
@@ -21,6 +28,12 @@ export default function RegisterPage() {
     e.preventDefault()
     if (!username || !email || !password) {
       toast.error('Please fill in all required fields')
+      return
+    }
+
+    // Validate email domain
+    if (!email.toLowerCase().endsWith(ALLOWED_EMAIL_DOMAIN)) {
+      toast.error(`Only ${ALLOWED_EMAIL_DOMAIN} emails are allowed`)
       return
     }
 
@@ -41,6 +54,13 @@ export default function RegisterPage() {
       router.push('/dashboard')
     }
 
+    // If Supabase is not configured, skip it entirely — prevents broken cookie writes
+    if (!isSupabaseConfigured()) {
+      localRegister()
+      setLoading(false)
+      return
+    }
+
     try {
       const supabase = createClient()
       const { data, error } = await supabase.auth.signUp({
@@ -55,22 +75,6 @@ export default function RegisterPage() {
       })
 
       if (error) {
-        // Supabase not configured / placeholder creds / network unreachable — use local session
-        const isMisconfigured =
-          error.message?.includes('Invalid API key') ||
-          error.message?.includes('secret API key') ||
-          error.message?.includes('apiKey') ||
-          error.message?.includes('JWKS') ||
-          error.message?.includes('placeholder') ||
-          error.message?.toLowerCase().includes('fetch') ||
-          (error as { status?: number }).status === 0
-
-        if (isMisconfigured) {
-          localRegister()
-          return
-        }
-
-        // Real auth error (e.g. email already in use, weak password)
         toast.error(error.message || 'Registration failed')
         return
       }
@@ -92,7 +96,7 @@ export default function RegisterPage() {
       toast.success('Registration successful! Welcome to ClassmateHub.')
       router.push('/dashboard')
     } catch {
-      // Network error / Supabase completely unreachable — fall back to local session
+      // Network error — fall back to local session
       localRegister()
     } finally {
       setLoading(false)
@@ -151,10 +155,13 @@ export default function RegisterPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="rahul@bvm.ac.in"
+              placeholder="yourname@bvmengineering.ac.in"
               className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-600 rounded-lg pl-10 pr-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-400 transition-colors"
             />
           </div>
+          <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1.5 font-mono">
+            Only @bvmengineering.ac.in emails are accepted
+          </p>
         </div>
 
         <div>

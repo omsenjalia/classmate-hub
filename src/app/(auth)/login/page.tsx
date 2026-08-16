@@ -8,6 +8,13 @@ import { useAppStore } from '@/store/useAppStore'
 import { Lock, Mail, ArrowRight, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
+const ALLOWED_EMAIL_DOMAIN = '@bvmengineering.ac.in'
+
+function isSupabaseConfigured(): boolean {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+  return !!url && !url.includes('placeholder')
+}
+
 export default function LoginPage() {
   const router = useRouter()
   const setUser = useAppStore((state) => state.setUser)
@@ -19,6 +26,12 @@ export default function LoginPage() {
     e.preventDefault()
     if (!email || !password) {
       toast.error('Please enter email and password')
+      return
+    }
+
+    // Validate email domain
+    if (!email.toLowerCase().endsWith(ALLOWED_EMAIL_DOMAIN)) {
+      toast.error(`Only ${ALLOWED_EMAIL_DOMAIN} emails are allowed`)
       return
     }
 
@@ -40,6 +53,14 @@ export default function LoginPage() {
       router.push('/dashboard')
     }
 
+    // If Supabase is not configured, skip it entirely — go straight to local login
+    // This prevents the Supabase client from writing broken auth cookies
+    if (!isSupabaseConfigured()) {
+      localLogin()
+      setLoading(false)
+      return
+    }
+
     try {
       const supabase = createClient()
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -48,21 +69,6 @@ export default function LoginPage() {
       })
 
       if (error) {
-        // Supabase not configured / placeholder creds / network unreachable — use local session
-        const isMisconfigured =
-          error.message?.includes('Invalid API key') ||
-          error.message?.includes('apiKey') ||
-          error.message?.includes('secret API key') ||
-          error.message?.includes('placeholder') ||
-          error.message?.toLowerCase().includes('fetch') ||
-          (error as { status?: number }).status === 0
-
-        if (isMisconfigured) {
-          localLogin()
-          return
-        }
-
-        // Real auth error — wrong password, user not found, etc.
         toast.error(error.message || 'Login failed. Check your credentials.')
         return
       }
@@ -93,7 +99,7 @@ export default function LoginPage() {
         router.push('/dashboard')
       }
     } catch {
-      // Network error / Supabase completely unreachable — fall back to local session
+      // Network error — fall back to local session
       localLogin()
     } finally {
       setLoading(false)
@@ -118,10 +124,13 @@ export default function LoginPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="student@bvm.ac.in"
+              placeholder="yourname@bvmengineering.ac.in"
               className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-600 rounded-lg pl-10 pr-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-400 transition-colors"
             />
           </div>
+          <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1.5 font-mono">
+            Only @bvmengineering.ac.in emails are accepted
+          </p>
         </div>
 
         <div>
