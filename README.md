@@ -15,10 +15,10 @@ database using `supabase/schema.sql`, then optionally load `supabase/seed.sql`.
 For an already initialized database, run
 `supabase/migrations/20260816_security_hardening.sql` as well.
 
-File uploads require the five Cloudflare R2 variables in `.env.example`. The
-bucket CORS policy must permit browser `PUT` requests from your local and
-deployed origins and allow the `Content-Type` header. Files upload directly from
-the browser to R2, avoiding Vercel's function request-body limit.
+File uploads use the GitHub Contents API. Set the GitHub storage variables in
+`.env.local` and Vercel. The browser sends files in 3MB chunks, preventing
+Vercel's function payload limit from rejecting uploads while keeping the GitHub
+token private on the server.
 
 ## Checks
 

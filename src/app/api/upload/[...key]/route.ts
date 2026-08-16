@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { deleteFileFromGithub } from '@/lib/github-storage'
-import { deleteFromR2, isR2Configured } from '@/lib/r2'
 import { createClient } from '@/lib/supabase/server'
 
 export const runtime = 'nodejs'
@@ -47,12 +46,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Only the owner or an admin can delete this file' }, { status: 403 })
     }
 
-    if (isR2Configured()) {
-      await deleteFromR2(fullKey)
-    } else {
-      // Preserve deletion support for records created before the R2 migration.
-      await deleteFileFromGithub(fullKey)
-    }
+    await deleteFileFromGithub(fullKey)
 
     if (material) {
       const { error: deleteError } = await supabase.from('materials').delete().eq('id', material.id)

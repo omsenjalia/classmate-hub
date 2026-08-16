@@ -81,9 +81,9 @@ CREATE TABLE IF NOT EXISTS materials (
   id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   title           TEXT NOT NULL,
   description     TEXT,
-  -- file uploads (Cloudflare R2)
-  file_url        TEXT,              -- R2 public CDN URL
-  file_key        TEXT,              -- R2 object key
+  -- file uploads (GitHub-backed storage)
+  file_url        TEXT,              -- application download URL
+  file_key        TEXT,              -- GitHub storage key
   file_name       TEXT,
   file_type       TEXT,              -- 'pdf'|'docx'|'image'|'code'|'zip'
   file_size_bytes BIGINT,

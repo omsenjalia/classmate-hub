@@ -4,6 +4,7 @@ import { use, useState } from 'react'
 import Link from 'next/link'
 import { useAppStore } from '@/store/useAppStore'
 import { createClient } from '@/lib/supabase/client'
+import { uploadFileInGithubChunks } from '@/lib/github-upload'
 import { formatDate, getSubjectColor } from '@/lib/utils'
 import {
   ShieldCheck,
@@ -54,44 +55,20 @@ export default function UserProfilePage({
 
     setAvatarUploading(true)
     try {
-      const presignRes = await fetch('/api/upload/presign', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fileName: `avatars/${file.name}`,
-          contentType: file.type || 'image/png',
-          fileSize: file.size,
-        }),
-      })
-
-      if (!presignRes.ok) {
-        const errorData = await presignRes.json().catch(() => ({}))
-        throw new Error(errorData.error || 'Unable to prepare the avatar upload')
-      }
-
-      const { presignedUrl, publicUrl } = await presignRes.json()
-      const uploadRes = await fetch(presignedUrl, {
-        method: 'PUT',
-        headers: { 'Content-Type': file.type || 'image/png' },
-        body: file,
-      })
-
-      if (!uploadRes.ok) {
-        throw new Error('Storage rejected the avatar upload. Check the R2 CORS configuration.')
-      }
+      const upload = await uploadFileInGithubChunks(file)
 
       if (user) {
         const supabase = createClient()
         const { error } = await supabase
           .from('profiles')
-          .update({ avatar_url: publicUrl })
+          .update({ avatar_url: upload.publicUrl })
           .eq('id', user.id)
 
         if (error) throw new Error(error.message)
 
         setUser({
           ...user,
-          avatar_url: publicUrl,
+          avatar_url: upload.publicUrl,
         })
       }
       toast.success('Profile avatar updated!')
