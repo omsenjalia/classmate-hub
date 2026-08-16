@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/useAppStore'
+import { createClient } from '@/lib/supabase/client'
 import {
   Menu,
   Search,
@@ -43,7 +44,12 @@ export default function Topbar() {
     }
   }
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await createClient().auth.signOut()
+    } catch {
+      // The persisted local preview session can still be cleared safely.
+    }
     logout()
     toast.success('Signed out')
     router.push('/login')

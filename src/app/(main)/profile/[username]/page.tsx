@@ -3,9 +3,9 @@
 import { use, useState } from 'react'
 import Link from 'next/link'
 import { useAppStore } from '@/store/useAppStore'
+import { createClient } from '@/lib/supabase/client'
 import { formatDate, getSubjectColor } from '@/lib/utils'
 import {
-  User,
   ShieldCheck,
   Edit2,
   FolderKanban,
@@ -64,13 +64,34 @@ export default function UserProfilePage({
         }),
       })
 
-      const { publicUrl } = await presignRes.json()
-      const previewUrl = URL.createObjectURL(file)
+      if (!presignRes.ok) {
+        const errorData = await presignRes.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Unable to prepare the avatar upload')
+      }
+
+      const { presignedUrl, publicUrl } = await presignRes.json()
+      const uploadRes = await fetch(presignedUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': file.type || 'image/png' },
+        body: file,
+      })
+
+      if (!uploadRes.ok) {
+        throw new Error('Storage rejected the avatar upload. Check the R2 CORS configuration.')
+      }
 
       if (user) {
+        const supabase = createClient()
+        const { error } = await supabase
+          .from('profiles')
+          .update({ avatar_url: publicUrl })
+          .eq('id', user.id)
+
+        if (error) throw new Error(error.message)
+
         setUser({
           ...user,
-          avatar_url: previewUrl || publicUrl,
+          avatar_url: publicUrl,
         })
       }
       toast.success('Profile avatar updated!')

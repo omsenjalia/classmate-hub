@@ -10,7 +10,6 @@ import {
   Plus,
   Calendar,
   Filter,
-  CheckCircle2,
   Trash2,
   X,
   Inbox,

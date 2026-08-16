@@ -135,18 +135,18 @@ export default function MaterialDetailPage({
     if (!confirm('Are you sure you want to delete this material?')) return
 
     try {
-      // Delete from Supabase
-      const supabase = createClient()
-      const { error } = await supabase
-        .from('materials')
-        .delete()
-        .eq('id', material.id)
-
-      if (error) throw new Error(error.message)
-
-      // Also attempt to clean up the stored file
       if (material.file_key) {
-        await fetch(`/api/upload/${material.file_key}`, { method: 'DELETE' }).catch(() => {})
+        // The server performs both the ownership check and object + metadata
+        // deletion, preventing orphaned files and client-side race conditions.
+        const response = await fetch(`/api/upload/${material.file_key}`, { method: 'DELETE' })
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(errorData.error || 'Failed to delete the stored file')
+        }
+      } else {
+        const supabase = createClient()
+        const { error } = await supabase.from('materials').delete().eq('id', material.id)
+        if (error) throw new Error(error.message)
       }
 
       toast.success('Material deleted')

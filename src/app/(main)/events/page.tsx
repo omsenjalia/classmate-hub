@@ -427,6 +427,39 @@ export default function EventsPage() {
                 </div>
               </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-mono text-gray-500 dark:text-gray-400 uppercase mb-1">
+                    Subject
+                  </label>
+                  <select
+                    value={subjectId}
+                    onChange={(e) => setSubjectId(e.target.value)}
+                    className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-600 rounded-xl px-3 py-2.5 text-sm text-gray-900 dark:text-white focus:border-indigo-500 dark:focus:border-indigo-400 focus:outline-none"
+                  >
+                    <option value="">General event</option>
+                    {subjects.map((subject) => (
+                      <option key={subject.id} value={subject.id}>
+                        {subject.code} — {subject.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-mono text-gray-500 dark:text-gray-400 uppercase mb-1">
+                    Capacity (optional)
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={maxAttendees}
+                    onChange={(e) => setMaxAttendees(e.target.value)}
+                    placeholder="Unlimited"
+                    className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-600 rounded-xl px-3 py-2.5 text-sm text-gray-900 dark:text-white focus:border-indigo-500 dark:focus:border-indigo-400 focus:outline-none"
+                  />
+                </div>
+              </div>
+
               <div>
                 <label className="block text-xs font-mono text-gray-500 dark:text-gray-400 uppercase mb-1">
                   Location / Link

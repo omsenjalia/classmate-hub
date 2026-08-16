@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Profile, UserRole } from '@/lib/types'
-import { Users, ShieldCheck, User, Search, CheckCircle2 } from 'lucide-react'
+import { Users, ShieldCheck, Search } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 const INITIAL_PROFILES: Profile[] = [

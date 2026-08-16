@@ -48,6 +48,7 @@ export default function RootLayout({
                 const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
                 const theme = direct || fromSession || (prefersDark ? 'dark' : 'light');
                 document.documentElement.classList.toggle('dark', theme === 'dark');
+                document.documentElement.style.colorScheme = theme;
                 // Keep both storage keys in sync
                 if (theme) localStorage.setItem('classmatehub-theme', theme);
               } catch(e) {}

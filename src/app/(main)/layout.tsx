@@ -2,6 +2,7 @@ import Sidebar from '@/components/layout/Sidebar'
 import Topbar from '@/components/layout/Topbar'
 import MobileNav from '@/components/layout/MobileNav'
 import BottomNav from '@/components/layout/BottomNav'
+import AppDataProvider from '@/components/layout/AppDataProvider'
 
 export default function MainLayout({
   children,
@@ -9,7 +10,8 @@ export default function MainLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-[hsl(225,20%,7%)] overflow-hidden">
+    <AppDataProvider>
+      <div className="flex h-screen bg-gray-50 dark:bg-[hsl(225,20%,7%)] overflow-hidden">
       {/* Desktop Sidebar */}
       <Sidebar className="hidden md:flex shrink-0" />
 
@@ -26,6 +28,7 @@ export default function MainLayout({
 
       {/* Mobile Bottom Nav */}
       <BottomNav />
-    </div>
+      </div>
+    </AppDataProvider>
   )
 }

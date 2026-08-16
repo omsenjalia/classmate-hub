@@ -50,11 +50,19 @@ export const useAppStore = create<AppState>()(
         if (typeof window !== 'undefined') {
           localStorage.setItem('classmatehub-theme', theme)
           document.documentElement.classList.toggle('dark', theme === 'dark')
+          document.documentElement.style.colorScheme = theme
         }
         set({ theme })
       },
       toggleTheme: () => {
-        const next = get().theme === 'dark' ? 'light' : 'dark'
+        // The document is authoritative until Zustand has completed hydration.
+        // This keeps the first click correct when the pre-paint script restored
+        // a theme different from the store's server-rendered default.
+        const isDark =
+          typeof document !== 'undefined'
+            ? document.documentElement.classList.contains('dark')
+            : get().theme === 'dark'
+        const next = isDark ? 'light' : 'dark'
         get().setTheme(next)
       },
       logout: () => set({ user: null, isLoggedIn: false }),

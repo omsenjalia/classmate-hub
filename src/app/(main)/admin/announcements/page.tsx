@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { fetchLiveAnnouncements } from '@/lib/supabase-data'
 import { Announcement } from '@/lib/types'
 import { formatDate } from '@/lib/utils'
-import { Megaphone, Pin, Plus, Trash2, CheckCircle2 } from 'lucide-react'
+import { Megaphone, Pin, Plus, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function AdminAnnouncementsPage() {

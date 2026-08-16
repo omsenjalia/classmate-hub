@@ -252,15 +252,34 @@ ALTER TABLE deadlines     ENABLE ROW LEVEL SECURITY;
 
 -- Helper function to check admin role
 CREATE OR REPLACE FUNCTION is_admin()
-RETURNS BOOLEAN LANGUAGE sql SECURITY DEFINER AS $$
+RETURNS BOOLEAN LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
   SELECT EXISTS (
     SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'
   );
 $$;
 
+-- RLS can restrict which rows a user updates, but not individual columns. Keep
+-- role changes server/admin-only so a student cannot promote their own profile.
+CREATE OR REPLACE FUNCTION prevent_profile_role_change()
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  IF NEW.role IS DISTINCT FROM OLD.role AND NOT is_admin() THEN
+    RAISE EXCEPTION 'Only an administrator can change a profile role';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS prevent_profile_role_change ON profiles;
+CREATE TRIGGER prevent_profile_role_change
+  BEFORE UPDATE ON profiles
+  FOR EACH ROW EXECUTE FUNCTION prevent_profile_role_change();
+
 -- PROFILES
 CREATE POLICY "Public profiles" ON profiles FOR SELECT USING (TRUE);
-CREATE POLICY "Update own profile" ON profiles FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "Update own profile or admin" ON profiles FOR UPDATE
+  USING (auth.uid() = id OR is_admin())
+  WITH CHECK (auth.uid() = id OR is_admin());
 
 -- SUBJECTS & LABS
 CREATE POLICY "Public subjects" ON subjects FOR SELECT USING (TRUE);
@@ -329,3 +348,13 @@ CREATE POLICY "Auth create deadline" ON deadlines FOR INSERT
   WITH CHECK (auth.uid() = created_by);
 CREATE POLICY "Admin delete deadline" ON deadlines FOR DELETE
   USING (is_admin());
+
+-- Prevent ownership fields from being reassigned in otherwise permitted edits.
+ALTER POLICY "Owner or admin update" ON materials
+  WITH CHECK (auth.uid() = uploaded_by OR is_admin());
+ALTER POLICY "Edit own message" ON messages
+  WITH CHECK (auth.uid() = user_id);
+ALTER POLICY "Auth RSVP" ON event_rsvps
+  WITH CHECK (auth.uid() = user_id);
+ALTER POLICY "Own bookmarks" ON bookmarks
+  WITH CHECK (auth.uid() = user_id);

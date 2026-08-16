@@ -1,10 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAppStore } from '@/store/useAppStore'
 import { fetchLiveMaterials } from '@/lib/supabase-data'
 import { Material } from '@/lib/types'
-import { formatBytes, formatDate } from '@/lib/utils'
+import { formatBytes } from '@/lib/utils'
 import {
   Users,
   FolderKanban,
@@ -12,8 +11,6 @@ import {
   HardDrive,
   TrendingUp,
   ArrowUpRight,
-  UserCheck,
-  ShieldCheck,
 } from 'lucide-react'
 import {
   AreaChart,
@@ -35,7 +32,6 @@ const WEEKLY_UPLOADS_DATA = [
 ]
 
 export default function AdminDashboardPage() {
-  const { user } = useAppStore()
   const [materials, setMaterials] = useState<Material[]>([])
 
   useEffect(() => {

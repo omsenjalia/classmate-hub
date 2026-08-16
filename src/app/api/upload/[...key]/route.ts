@@ -1,56 +1,62 @@
 import { NextResponse } from 'next/server'
 import { deleteFileFromGithub } from '@/lib/github-storage'
+import { deleteFromR2, isR2Configured } from '@/lib/r2'
 import { createClient } from '@/lib/supabase/server'
 
+export const runtime = 'nodejs'
+
 export async function DELETE(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ key: string[] }> }
 ) {
   try {
-    const resolvedParams = await params
-    const fullKey = resolvedParams.key.join('/')
-
+    const { key } = await params
+    const fullKey = key.join('/')
     if (!fullKey) {
       return NextResponse.json({ error: 'File key is required' }, { status: 400 })
     }
 
-    try {
-      const supabase = await createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (user) {
-        // Verify ownership or admin
-        const { data: material } = await supabase
-          .from('materials')
-          .select('uploaded_by')
-          .eq('file_key', fullKey)
-          .single()
-
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .single()
-
-        const isAdmin = profile?.role === 'admin'
-        const isOwner = material?.uploaded_by === user.id
-
-        if (!isOwner && !isAdmin) {
-          return NextResponse.json({ error: 'Forbidden: Only owner or admin can delete' }, { status: 403 })
-        }
-
-        // Delete DB record
-        await supabase.from('materials').delete().eq('file_key', fullKey)
-      }
-    } catch {
-      // Fallback
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: 'You must be signed in to delete a file' }, { status: 401 })
     }
 
-    // Delete from Private GitHub Repository
-    try {
+    const { data: material, error: materialError } = await supabase
+      .from('materials')
+      .select('id, uploaded_by, file_url')
+      .eq('file_key', fullKey)
+      .maybeSingle()
+
+    if (materialError) throw new Error(materialError.message)
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+    const isAdmin = profile?.role === 'admin'
+    const ownsMaterial = material?.uploaded_by === user.id
+    // A just-uploaded object has no material row yet, but its user-id prefix
+    // still makes cleanup safe if saving the metadata fails.
+    const ownsUnattachedObject = fullKey.startsWith(`${user.id}/`)
+
+    if (!isAdmin && !ownsMaterial && !ownsUnattachedObject) {
+      return NextResponse.json({ error: 'Only the owner or an admin can delete this file' }, { status: 403 })
+    }
+
+    if (isR2Configured()) {
+      await deleteFromR2(fullKey)
+    } else {
+      // Preserve deletion support for records created before the R2 migration.
       await deleteFileFromGithub(fullKey)
-    } catch {
-      // Ignore network errors
+    }
+
+    if (material) {
+      const { error: deleteError } = await supabase.from('materials').delete().eq('id', material.id)
+      if (deleteError) throw new Error(deleteError.message)
     }
 
     return NextResponse.json({ success: true, key: fullKey })

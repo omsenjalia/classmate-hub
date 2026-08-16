@@ -1,12 +1,14 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useDropzone, FileRejection } from 'react-dropzone'
 import { useAppStore } from '@/store/useAppStore'
 import { MAX_FILE_SIZE_BYTES } from '@/lib/constants'
 import { formatBytes } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
+import { fetchLiveLabs } from '@/lib/supabase-data'
+import { Lab } from '@/lib/types'
 import {
   Upload,
   FileText,
@@ -29,12 +31,20 @@ export default function MaterialUploadPage() {
   const [subjectId, setSubjectId] = useState('')
   const [labId, setLabId] = useState('')
   const [tagsInput, setTagsInput] = useState('')
+  const [labs, setLabs] = useState<Lab[]>([])
 
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
 
   // Labs would come from a store or API keyed by subject — for now initialize empty
-  const availableLabs: { id: string; name: string; subject_id: string; sort_order: number }[] = []
+  useEffect(() => {
+    fetchLiveLabs().then(setLabs)
+  }, [])
+
+  const availableLabs = useMemo(
+    () => labs.filter((lab) => lab.subject_id === subjectId),
+    [labs, subjectId]
+  )
 
   const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: FileRejection[]) => {
     if (rejectedFiles && rejectedFiles.length > 0) {
@@ -97,7 +107,7 @@ export default function MaterialUploadPage() {
         else if (['zip', 'rar'].includes(ext)) detectedFileType = 'zip'
         else detectedFileType = 'docx'
 
-        // 1. Try R2 presigned upload first
+        // Create a signed URL, then upload directly to R2.
         let r2Success = false
         try {
           const presignRes = await fetch('/api/upload/presign', {
@@ -146,26 +156,12 @@ export default function MaterialUploadPage() {
           // R2 not configured or failed — fall through to GitHub storage
         }
 
-        // 2. Fallback: upload via GitHub storage API
+        // Never relay file bodies through a Vercel function: its body limit is
+        // lower than the 100MB upload limit exposed by this page.
         if (!r2Success) {
-          setUploadProgress(20)
-          const formData = new FormData()
-          formData.append('file', file)
-
-          const githubRes = await fetch('/api/upload/github', {
-            method: 'POST',
-            body: formData,
-          })
-
-          if (!githubRes.ok) {
-            const errData = await githubRes.json().catch(() => ({}))
-            throw new Error(errData.error || 'File upload failed. Please try again.')
-          }
-
-          const githubData = await githubRes.json()
-          finalFileUrl = githubData.publicUrl
-          finalFileKey = githubData.key
-          setUploadProgress(85)
+          throw new Error(
+            'Direct file storage is unavailable. Configure Cloudflare R2 before uploading files.'
+          )
         }
       }
 
@@ -405,7 +401,7 @@ export default function MaterialUploadPage() {
           {uploading && (
             <div className="space-y-2 pt-2">
               <div className="flex justify-between text-xs font-mono text-muted">
-                <span>Uploading direct to Cloudflare R2...</span>
+              <span>Uploading directly to secure file storage...</span>
                 <span>{uploadProgress}%</span>
               </div>
               <div className="h-2 w-full bg-page rounded-full overflow-hidden border border-border">
