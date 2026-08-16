@@ -16,6 +16,8 @@ For an already initialized database, run
 `supabase/migrations/20260816_security_hardening.sql` as well.
 Then run `supabase/migrations/20260816_product_features.sql` to enable
 notifications, moderation, version history, and audit logs.
+Finally, run `supabase/migrations/20260816_poll_vote_delete_policy.sql` so
+students can update or remove their own poll votes.
 
 File uploads use the GitHub Contents API. Set the GitHub storage variables in
 `.env.local` and Vercel. The browser sends files in 3MB chunks, preventing
