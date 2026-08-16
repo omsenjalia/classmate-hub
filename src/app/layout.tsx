@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { DM_Sans, JetBrains_Mono } from 'next/font/google'
 import { Toaster } from 'react-hot-toast'
 import './globals.css'
+import ServiceWorkerRegistration from '@/components/layout/ServiceWorkerRegistration'
 
 const dmSans = DM_Sans({
   subsets: ['latin'],
@@ -65,6 +66,7 @@ export default function RootLayout({
               '!bg-white dark:!bg-[hsl(225,16%,11%)] !text-gray-900 dark:!text-gray-100 !border !border-gray-200 dark:!border-[hsl(228,18%,22%)] !rounded-xl !text-sm !shadow-lg',
           }}
         />
+        <ServiceWorkerRegistration />
         {children}
       </body>
     </html>

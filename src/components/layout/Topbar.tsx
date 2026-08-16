@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/useAppStore'
 import { createClient } from '@/lib/supabase/client'
+import type { Notification } from '@/lib/types'
 import {
   Menu,
   Search,
@@ -14,6 +15,7 @@ import {
   Upload,
   Sun,
   Moon,
+  Bell,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -22,6 +24,8 @@ export default function Topbar() {
   const { user, searchQuery, setSearchQuery, toggleSidebar, logout, theme, toggleTheme } =
     useAppStore()
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
+  const [notifications, setNotifications] = useState<Notification[]>([])
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   // Close dropdown on outside click
@@ -36,6 +40,22 @@ export default function Topbar() {
       return () => document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [dropdownOpen])
+
+  useEffect(() => {
+    if (!user) return
+    const supabase = createClient()
+    supabase.from('notifications').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(8)
+      .then(({ data }) => setNotifications((data || []) as Notification[]))
+  }, [user])
+
+  const markNotificationsRead = async () => {
+    if (!user) return
+    setNotificationsOpen((open) => !open)
+    if (notifications.some((item) => !item.is_read)) {
+      setNotifications((items) => items.map((item) => ({ ...item, is_read: true })))
+      await createClient().from('notifications').update({ is_read: true }).eq('user_id', user.id).eq('is_read', false)
+    }
+  }
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -89,6 +109,21 @@ export default function Topbar() {
           >
             <Upload className="w-4 h-4" /> Upload
           </Link>
+        )}
+
+        {user && (
+          <div className="relative">
+            <button onClick={markNotificationsRead} className="relative p-2 text-gray-500 dark:text-gray-400 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5" aria-label="Notifications">
+              <Bell className="w-[18px] h-[18px]" />
+              {notifications.some((item) => !item.is_read) && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />}
+            </button>
+            {notificationsOpen && <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto bg-white dark:bg-[hsl(225,16%,11%)] border border-gray-200 dark:border-[hsl(228,18%,22%)] rounded-xl shadow-lg p-2 z-50">
+              <p className="px-2 py-1 text-xs font-semibold text-muted">Notifications</p>
+              {notifications.length ? notifications.map((item) => <Link key={item.id} href={item.href || '#'} onClick={() => setNotificationsOpen(false)} className="block p-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5">
+                <p className="text-sm font-medium text-primary">{item.title}</p><p className="text-xs text-muted mt-0.5">{item.body}</p>
+              </Link>) : <p className="p-4 text-sm text-muted text-center">You&apos;re all caught up.</p>}
+            </div>}
+          </div>
         )}
 
         {/* Theme Toggle */}

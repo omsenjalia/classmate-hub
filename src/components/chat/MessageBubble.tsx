@@ -3,18 +3,20 @@
 import { useState } from 'react'
 import { Message, Profile } from '@/lib/types'
 import { formatRelativeTime } from '@/lib/utils'
-import { Trash2, Edit2, Check, X, ShieldCheck } from 'lucide-react'
+import { Trash2, Edit2, Check, X, ShieldCheck, Flag } from 'lucide-react'
 
 export default function MessageBubble({
   message,
   currentUser,
   onDelete,
   onEdit,
+  onReport,
 }: {
   message: Message
   currentUser: Profile | null
   onDelete: (id: string) => void
   onEdit: (id: string, newContent: string) => void
+  onReport?: (id: string) => void
 }) {
   const [isEditing, setIsEditing] = useState(false)
   const [editContent, setEditContent] = useState(message.content)
@@ -143,6 +145,11 @@ export default function MessageBubble({
               title="Delete Message"
             >
               <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          )}
+          {!isOwner && onReport && (
+            <button onClick={() => onReport(message.id)} className="p-1 text-gray-400 hover:text-amber-500 rounded hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer" title="Report message">
+              <Flag className="w-3.5 h-3.5" />
             </button>
           )}
         </div>

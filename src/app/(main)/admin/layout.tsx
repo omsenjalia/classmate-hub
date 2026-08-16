@@ -10,6 +10,8 @@ import {
   BookOpen,
   Users,
   Megaphone,
+  ShieldAlert,
+  ClipboardList,
   Lock,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -50,6 +52,8 @@ export default function AdminLayout({
     { label: 'Materials Storage', href: '/admin/materials', icon: FolderKanban },
     { label: 'Student Directory', href: '/admin/users', icon: Users },
     { label: 'Announcements', href: '/admin/announcements', icon: Megaphone },
+    { label: 'Moderation', href: '/admin/moderation', icon: ShieldAlert },
+    { label: 'Audit', href: '/admin/audit', icon: ClipboardList },
   ]
 
   return (

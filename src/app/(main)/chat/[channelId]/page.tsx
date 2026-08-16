@@ -148,6 +148,15 @@ export default function ChatChannelPage({
     toast.success('Message edited')
   }
 
+  const handleReportMessage = async (id: string) => {
+    if (!user) return toast.error('Please sign in to report a message')
+    const reason = window.prompt('Why are you reporting this message?')?.trim()
+    if (!reason) return
+    const { error } = await createClient().from('moderation_reports').insert({ reporter_id: user.id, message_id: id, reason })
+    if (error) return toast.error(error.message)
+    toast.success('Report sent to the moderators')
+  }
+
   return (
     <div className="flex flex-col h-[calc(100vh-6rem)] max-w-4xl mx-auto space-y-4 animate-fade-in">
       <div className="bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-2xl px-5 py-3.5 flex items-center justify-between shadow-sm shrink-0">
@@ -184,6 +193,7 @@ export default function ChatChannelPage({
               currentUser={user}
               onDelete={handleDeleteMessage}
               onEdit={handleEditMessage}
+              onReport={handleReportMessage}
             />
           ))
         )}

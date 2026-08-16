@@ -143,6 +143,45 @@ export interface Bookmark {
   materials?: Material | null
 }
 
+export interface MaterialVersion {
+  id: string
+  material_id: string
+  version_number: number
+  file_url: string | null
+  file_key: string | null
+  file_name: string | null
+  file_size_bytes: number | null
+  change_note: string | null
+  created_by: string | null
+  created_at: string
+}
+
+export type NotificationType = 'announcement' | 'deadline' | 'event' | 'material' | 'message' | 'system'
+
+export interface Notification {
+  id: string
+  user_id: string
+  type: NotificationType
+  title: string
+  body: string | null
+  href: string | null
+  is_read: boolean
+  created_at: string
+}
+
+export interface ModerationReport {
+  id: string
+  reporter_id: string
+  message_id: string | null
+  reason: string
+  status: 'open' | 'resolved' | 'dismissed'
+  reviewed_by: string | null
+  created_at: string
+  reviewed_at: string | null
+  messages?: Message | null
+  profiles?: Profile | null
+}
+
 export type DeadlineType = 'assignment' | 'exam' | 'lab' | 'project' | 'other'
 
 export interface Deadline {

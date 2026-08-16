@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/useAppStore'
 import { Material } from '@/lib/types'
+import { MaterialVersion } from '@/lib/types'
+import { uploadFileInGithubChunks } from '@/lib/github-upload'
 import { formatDate, formatBytes, getSubjectColor } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import VideoEmbed from '@/components/materials/VideoEmbed'
@@ -19,6 +21,7 @@ import {
   Calendar,
   Eye,
   Loader2,
+  Bookmark,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -34,6 +37,9 @@ export default function MaterialDetailPage({
   const [material, setMaterial] = useState<Material | null>(null)
   const [loading, setLoading] = useState(true)
   const [downloadCount, setDownloadCount] = useState(0)
+  const [bookmarked, setBookmarked] = useState(false)
+  const [versions, setVersions] = useState<MaterialVersion[]>([])
+  const [versioning, setVersioning] = useState(false)
 
   useEffect(() => {
     async function fetchMaterial() {
@@ -60,6 +66,17 @@ export default function MaterialDetailPage({
     }
 
     fetchMaterial()
+  }, [resolvedParams.id])
+
+  useEffect(() => {
+    if (!user) return
+    createClient().from('bookmarks').select('id').eq('user_id', user.id).eq('material_id', resolvedParams.id).maybeSingle()
+      .then(({ data }) => setBookmarked(Boolean(data)))
+  }, [resolvedParams.id, user])
+
+  useEffect(() => {
+    createClient().from('material_versions').select('*').eq('material_id', resolvedParams.id).order('version_number', { ascending: false })
+      .then(({ data }) => setVersions((data || []) as MaterialVersion[]))
   }, [resolvedParams.id])
 
   if (loading) {
@@ -163,6 +180,39 @@ export default function MaterialDetailPage({
     }
   }
 
+  const toggleBookmark = async () => {
+    if (!user || !material) return toast.error('Please sign in to bookmark materials')
+    const supabase = createClient()
+    const { error } = bookmarked
+      ? await supabase.from('bookmarks').delete().eq('user_id', user.id).eq('material_id', material.id)
+      : await supabase.from('bookmarks').insert({ user_id: user.id, material_id: material.id })
+    if (error) return toast.error(error.message)
+    setBookmarked((value) => !value)
+    toast.success(bookmarked ? 'Bookmark removed' : 'Material bookmarked')
+  }
+
+  const uploadNewVersion = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const nextFile = event.target.files?.[0]
+    if (!nextFile || !material || !user) return
+    setVersioning(true)
+    try {
+      const upload = await uploadFileInGithubChunks(nextFile)
+      const supabase = createClient()
+      const nextNumber = (versions[0]?.version_number || 0) + 1
+      const { error: versionError } = await supabase.from('material_versions').insert({
+        material_id: material.id, version_number: nextNumber, file_url: material.file_url,
+        file_key: material.file_key, file_name: material.file_name, file_size_bytes: material.file_size_bytes,
+        change_note: `Replaced with ${nextFile.name}`, created_by: user.id,
+      })
+      if (versionError) throw new Error(versionError.message)
+      const { error } = await supabase.from('materials').update({ file_url: upload.publicUrl, file_key: upload.key, file_name: nextFile.name, file_size_bytes: nextFile.size, file_type: nextFile.name.endsWith('.pdf') ? 'pdf' : material.file_type }).eq('id', material.id)
+      if (error) throw new Error(error.message)
+      setMaterial({ ...material, file_url: upload.publicUrl, file_key: upload.key, file_name: nextFile.name, file_size_bytes: nextFile.size })
+      setVersions((current) => [{ id: `local-${nextNumber}`, material_id: material.id, version_number: nextNumber, file_url: material.file_url, file_key: material.file_key, file_name: material.file_name, file_size_bytes: material.file_size_bytes, change_note: `Replaced with ${nextFile.name}`, created_by: user.id, created_at: new Date().toISOString() }, ...current])
+      toast.success('New version published')
+    } catch (error) { toast.error(error instanceof Error ? error.message : 'Could not publish new version') } finally { setVersioning(false); event.target.value = '' }
+  }
+
   return (
     <div className="space-y-6 max-w-4xl mx-auto animate-in fade-in duration-200">
       {/* Back Link */}
@@ -204,6 +254,9 @@ export default function MaterialDetailPage({
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
+            <button onClick={toggleBookmark} className={`p-2.5 border rounded-xl transition-colors ${bookmarked ? 'bg-indigo-500/15 border-indigo-500/40 text-indigo-500' : 'bg-elevated border-border text-primary'}`} title="Bookmark material">
+              <Bookmark className="w-4 h-4" fill={bookmarked ? 'currentColor' : 'none'} />
+            </button>
             <button
               onClick={handleShare}
               className="p-2.5 bg-elevated hover:bg-border border border-border text-primary rounded-xl transition-colors cursor-pointer"
@@ -221,6 +274,10 @@ export default function MaterialDetailPage({
                 <Trash2 className="w-4 h-4" />
               </button>
             )}
+            {canDelete && <label className="p-2.5 bg-elevated border border-border text-primary rounded-xl cursor-pointer" title="Upload a newer version">
+              <FileText className="w-4 h-4" />
+              <input type="file" className="hidden" onChange={uploadNewVersion} disabled={versioning} />
+            </label>}
 
             <button
               onClick={handleDownload}
@@ -267,6 +324,8 @@ export default function MaterialDetailPage({
           </div>
         )}
       </div>
+
+      {versions.length > 0 && <section className="bg-card border border-border rounded-2xl p-5"><h2 className="text-sm font-bold text-primary">Version history</h2><div className="mt-3 space-y-2">{versions.map((version) => <a key={version.id} href={version.file_url || '#'} target="_blank" rel="noreferrer" className="flex justify-between text-sm rounded-lg bg-page p-3 hover:text-indigo-500"><span>Version {version.version_number} · {version.file_name}</span><span className="text-muted">{formatDate(version.created_at)}</span></a>)}</div></section>}
 
       {/* Document / Video Preview Section */}
       <div className="space-y-3">

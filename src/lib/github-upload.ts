@@ -19,10 +19,15 @@ export async function uploadFileInGithubChunks(
   onProgress?: (percent: number) => void
 ): Promise<GithubUploadResult> {
   const totalChunks = Math.ceil(file.size / GITHUB_UPLOAD_CHUNK_SIZE)
-  const uploadId = crypto.randomUUID()
+  const resumeKey = `classmatehub-upload:${file.name}:${file.size}:${file.lastModified}`
+  const saved = typeof window === 'undefined' ? null : localStorage.getItem(resumeKey)
+  let resume: { uploadId: string; nextChunk: number } | null = null
+  try { resume = saved ? JSON.parse(saved) : null } catch { /* start a new upload */ }
+  const uploadId = resume?.uploadId || crypto.randomUUID()
+  const startChunk = resume?.nextChunk && resume.nextChunk < totalChunks ? resume.nextChunk : 0
   let completed: GithubUploadResult | null = null
 
-  for (let index = 0; index < totalChunks; index++) {
+  for (let index = startChunk; index < totalChunks; index++) {
     const start = index * GITHUB_UPLOAD_CHUNK_SIZE
     const chunk = file.slice(start, Math.min(start + GITHUB_UPLOAD_CHUNK_SIZE, file.size), file.type)
     const data = new FormData()
@@ -34,13 +39,24 @@ export async function uploadFileInGithubChunks(
     data.append('chunkIndex', String(index))
     data.append('totalChunks', String(totalChunks))
 
-    const response = await fetch('/api/upload/github', { method: 'POST', body: data })
-    const payload = await response.json().catch(() => ({}))
-    if (!response.ok) throw new Error(payload.error || 'GitHub upload failed')
+    let payload: Record<string, unknown> = {}
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const response = await fetch('/api/upload/github', { method: 'POST', body: data })
+        payload = await response.json().catch(() => ({}))
+        if (response.ok) break
+        if (attempt === 2) throw new Error((payload.error as string) || 'GitHub upload failed')
+      } catch (error) {
+        if (attempt === 2) throw error
+      }
+      await new Promise((resolve) => setTimeout(resolve, 600 * (attempt + 1)))
+    }
     if (payload.completed) completed = payload as GithubUploadResult
+    localStorage.setItem(resumeKey, JSON.stringify({ uploadId, nextChunk: index + 1 }))
     onProgress?.(Math.round(((index + 1) / totalChunks) * 90))
   }
 
   if (!completed) throw new Error('GitHub upload did not complete')
+  localStorage.removeItem(resumeKey)
   return completed
 }

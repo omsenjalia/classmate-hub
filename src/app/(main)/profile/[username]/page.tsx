@@ -1,10 +1,11 @@
 'use client'
 
-import { use, useState } from 'react'
+import { use, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useAppStore } from '@/store/useAppStore'
 import { createClient } from '@/lib/supabase/client'
 import { uploadFileInGithubChunks } from '@/lib/github-upload'
+import type { Profile } from '@/lib/types'
 import { formatDate, getSubjectColor } from '@/lib/utils'
 import {
   ShieldCheck,
@@ -37,17 +38,41 @@ export default function UserProfilePage({
   const [displayName, setDisplayName] = useState(user?.display_name || '')
   const [bio, setBio] = useState(user?.bio || '')
   const [avatarUploading, setAvatarUploading] = useState(false)
+  const [profile, setProfile] = useState<Profile | null>(null)
 
   // No mock data — materials would be fetched from Supabase by user ID
-  const userUploads: {
+  type ProfileMaterial = {
     id: string
     title: string
     description: string | null
     created_at: string
     download_count: number
     subjects?: { code: string; name: string } | null
-  }[] = []
-  const userBookmarks: typeof userUploads = []
+  }
+  const [userUploads, setUserUploads] = useState<ProfileMaterial[]>([])
+  const [userBookmarks, setUserBookmarks] = useState<ProfileMaterial[]>([])
+
+  useEffect(() => {
+    const supabase = createClient()
+    async function loadProfileData() {
+      const { data: profile } = await supabase.from('profiles').select('*').eq('username', username).maybeSingle()
+      if (!profile) return
+      setProfile(profile as Profile)
+      if (user?.id === profile.id) {
+        setDisplayName(profile.display_name || '')
+        setBio(profile.bio || '')
+      }
+      const { data: uploads } = await supabase.from('materials').select('id,title,description,created_at,download_count,subjects(code,name)').eq('uploaded_by', profile.id).order('created_at', { ascending: false })
+      setUserUploads((uploads || []) as unknown as ProfileMaterial[])
+      if (user?.id === profile.id) {
+        const { data: bookmarks } = await supabase.from('bookmarks').select('materials(id,title,description,created_at,download_count,subjects(code,name))').eq('user_id', profile.id)
+        setUserBookmarks((bookmarks || []).flatMap((bookmark) => bookmark.materials ? [bookmark.materials] : []) as unknown as ProfileMaterial[])
+      }
+    }
+    void loadProfileData()
+  }, [user?.id, username])
+
+  const viewedProfile = profile || user
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -79,13 +104,16 @@ export default function UserProfilePage({
     }
   }
 
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
     if (user) {
+      const updates = { display_name: displayName.trim(), bio: bio.trim() }
+      const { error } = await createClient().from('profiles').update(updates).eq('id', user.id)
+      if (error) return toast.error(error.message)
       setUser({
         ...user,
-        display_name: displayName.trim(),
-        bio: bio.trim(),
+        ...updates,
       })
+      setProfile((current) => current ? { ...current, ...updates } : current)
     }
     setIsEditing(false)
     toast.success('Profile details saved!')
@@ -103,9 +131,9 @@ export default function UserProfilePage({
           {/* Avatar with Upload Hover */}
           <div className="relative group">
             <div className="w-24 h-24 rounded-full bg-indigo-500/20 border-2 border-indigo-500 flex items-center justify-center font-bold text-2xl text-indigo-500 overflow-hidden shadow-lg">
-              {user?.avatar_url ? (
+              {viewedProfile?.avatar_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={user.avatar_url} alt={username} className="w-full h-full object-cover" />
+                <img src={viewedProfile.avatar_url} alt={username} className="w-full h-full object-cover" />
               ) : (
                 username.charAt(0).toUpperCase()
               )}
@@ -136,10 +164,10 @@ export default function UserProfilePage({
           <div className="flex-1 space-y-2">
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3">
               <h1 className="text-2xl font-bold font-display text-primary">
-                {user?.display_name || username}
+                {viewedProfile?.display_name || username}
               </h1>
               <span className="text-xs font-mono text-muted">@{username}</span>
-              {user?.role === 'admin' && (
+              {viewedProfile?.role === 'admin' && (
                 <span className="inline-flex items-center gap-1 text-[10px] bg-amber-500/20 text-amber-300 font-mono px-2 py-0.5 rounded border border-amber-500/30">
                   <ShieldCheck className="w-3 h-3" /> ADMIN
                 </span>
@@ -179,12 +207,12 @@ export default function UserProfilePage({
               </div>
             ) : (
               <p className="text-xs text-muted leading-relaxed max-w-lg">
-                {user?.bio || 'IT Department Student • BVM Engineering College'}
+                {viewedProfile?.bio || 'IT Department Student • BVM Engineering College'}
               </p>
             )}
 
             <div className="flex items-center justify-center sm:justify-start gap-4 pt-2 text-xs font-mono text-muted">
-              <span>Joined {formatDate(user?.created_at)}</span>
+              <span>Joined {viewedProfile?.created_at ? formatDate(viewedProfile.created_at) : 'recently'}</span>
               <span>• {userUploads.length} Uploads</span>
             </div>
           </div>

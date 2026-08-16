@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { fetchLiveMaterials } from '@/lib/supabase-data'
+import { createClient } from '@/lib/supabase/client'
 import { Material } from '@/lib/types'
 import { formatBytes } from '@/lib/utils'
 import {
@@ -33,9 +34,19 @@ const WEEKLY_UPLOADS_DATA = [
 
 export default function AdminDashboardPage() {
   const [materials, setMaterials] = useState<Material[]>([])
+  const [memberCount, setMemberCount] = useState(0)
+  const [messageCount, setMessageCount] = useState(0)
 
   useEffect(() => {
     fetchLiveMaterials().then(setMaterials)
+    const supabase = createClient()
+    Promise.all([
+      supabase.from('profiles').select('*', { count: 'exact', head: true }),
+      supabase.from('messages').select('*', { count: 'exact', head: true }),
+    ]).then(([profiles, messages]) => {
+      setMemberCount(profiles.count || 0)
+      setMessageCount(messages.count || 0)
+    })
   }, [])
 
   const totalMaterials = materials.length
@@ -59,7 +70,7 @@ export default function AdminDashboardPage() {
               <Users className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">64</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{memberCount}</p>
           <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono flex items-center gap-1">
             <ArrowUpRight className="w-3 h-3" /> +12 this week
           </span>
@@ -85,7 +96,7 @@ export default function AdminDashboardPage() {
               <MessageSquare className="w-4 h-4" />
             </div>
           </div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">—</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{messageCount}</p>
           <span className="text-[10px] text-amber-600 dark:text-amber-400 font-mono flex items-center gap-1">
             <TrendingUp className="w-3 h-3" /> Live from Supabase
           </span>
