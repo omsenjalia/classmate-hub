@@ -105,76 +105,76 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="bg-[#1A1D27] border border-[#2D3148] rounded-2xl p-6 sm:p-8 shadow-2xl shadow-black/40">
+    <div className="bg-white dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 sm:p-8 shadow-xl">
       <div className="mb-6">
-        <h2 className="text-xl font-bold font-display text-white">Create Student Account</h2>
-        <p className="text-sm text-[#8B91A8] mt-1">Join your BVM IT Classmates community.</p>
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white">Create Student Account</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Join your BVM IT Classmates community.</p>
       </div>
 
       <form onSubmit={handleRegister} className="space-y-4">
         <div>
-          <label className="block text-xs font-mono font-medium text-[#8B91A8] uppercase tracking-wider mb-2">
+          <label className="block text-xs font-mono font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
             Username *
           </label>
           <div className="relative">
-            <User className="w-4 h-4 text-[#8B91A8] absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <User className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               required
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="e.g. rahul_shah"
-              className="w-full bg-[#0F1117] border border-[#2D3148] rounded-lg pl-10 pr-4 py-2.5 text-sm text-white placeholder-[#8B91A8]/60 focus:outline-none focus:border-[#4F6EF7] transition-colors"
+              className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-600 rounded-lg pl-10 pr-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-400 transition-colors"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-xs font-mono font-medium text-[#8B91A8] uppercase tracking-wider mb-2">
+          <label className="block text-xs font-mono font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
             Display Name
           </label>
           <div className="relative">
-            <UserCheck className="w-4 h-4 text-[#8B91A8] absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <UserCheck className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="Rahul Shah"
-              className="w-full bg-[#0F1117] border border-[#2D3148] rounded-lg pl-10 pr-4 py-2.5 text-sm text-white placeholder-[#8B91A8]/60 focus:outline-none focus:border-[#4F6EF7] transition-colors"
+              className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-600 rounded-lg pl-10 pr-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-400 transition-colors"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-xs font-mono font-medium text-[#8B91A8] uppercase tracking-wider mb-2">
+          <label className="block text-xs font-mono font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
             Email Address *
           </label>
           <div className="relative">
-            <Mail className="w-4 h-4 text-[#8B91A8] absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <Mail className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="rahul@bvm.ac.in"
-              className="w-full bg-[#0F1117] border border-[#2D3148] rounded-lg pl-10 pr-4 py-2.5 text-sm text-white placeholder-[#8B91A8]/60 focus:outline-none focus:border-[#4F6EF7] transition-colors"
+              className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-600 rounded-lg pl-10 pr-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-400 transition-colors"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-xs font-mono font-medium text-[#8B91A8] uppercase tracking-wider mb-2">
+          <label className="block text-xs font-mono font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
             Password *
           </label>
           <div className="relative">
-            <Lock className="w-4 h-4 text-[#8B91A8] absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <Lock className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="At least 6 characters"
-              className="w-full bg-[#0F1117] border border-[#2D3148] rounded-lg pl-10 pr-4 py-2.5 text-sm text-white placeholder-[#8B91A8]/60 focus:outline-none focus:border-[#4F6EF7] transition-colors"
+              className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-600 rounded-lg pl-10 pr-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-400 transition-colors"
             />
           </div>
         </div>
@@ -182,7 +182,7 @@ export default function RegisterPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full mt-4 bg-[#4F6EF7] hover:bg-[#3B55D4] text-white font-medium py-2.5 rounded-lg text-sm flex items-center justify-center gap-2 transition-all shadow-md shadow-[#4F6EF7]/20 disabled:opacity-50 cursor-pointer"
+          className="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-lg text-sm flex items-center justify-center gap-2 transition-all shadow-md shadow-indigo-600/20 disabled:opacity-50 cursor-pointer"
         >
           {loading ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -194,9 +194,9 @@ export default function RegisterPage() {
         </button>
       </form>
 
-      <div className="mt-6 text-center text-xs text-[#8B91A8]">
+      <div className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
         Already have an account?{' '}
-        <Link href="/login" className="text-[#4F6EF7] hover:underline font-medium">
+        <Link href="/login" className="text-indigo-600 dark:text-indigo-400 hover:underline font-medium">
           Sign in
         </Link>
       </div>

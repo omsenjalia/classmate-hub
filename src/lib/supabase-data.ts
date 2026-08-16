@@ -1,14 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
 import {
-  MOCK_ANNOUNCEMENTS,
-  MOCK_MATERIALS,
-  MOCK_EVENTS,
-  MOCK_POLLS,
-  MOCK_DEADLINES,
-  MOCK_SUBJECTS,
-  MOCK_CHANNELS,
-} from '@/lib/mock-data'
-import {
   Announcement,
   Material,
   EventItem,
@@ -16,6 +7,7 @@ import {
   Deadline,
   Subject,
   Channel,
+  Lab,
 } from '@/lib/types'
 
 const isSupabaseConfigured = () => {
@@ -29,7 +21,7 @@ const isSupabaseConfigured = () => {
 }
 
 export async function fetchLiveAnnouncements(): Promise<Announcement[]> {
-  if (!isSupabaseConfigured()) return MOCK_ANNOUNCEMENTS
+  if (!isSupabaseConfigured()) return []
 
   try {
     const supabase = createClient()
@@ -39,15 +31,15 @@ export async function fetchLiveAnnouncements(): Promise<Announcement[]> {
       .order('is_pinned', { ascending: false })
       .order('created_at', { ascending: false })
 
-    if (error || !data || data.length === 0) return MOCK_ANNOUNCEMENTS
+    if (error || !data) return []
     return data as Announcement[]
   } catch {
-    return MOCK_ANNOUNCEMENTS
+    return []
   }
 }
 
 export async function fetchLiveMaterials(): Promise<Material[]> {
-  if (!isSupabaseConfigured()) return MOCK_MATERIALS
+  if (!isSupabaseConfigured()) return []
 
   try {
     const supabase = createClient()
@@ -56,15 +48,15 @@ export async function fetchLiveMaterials(): Promise<Material[]> {
       .select('*, profiles(*), subjects(*), labs(*)')
       .order('created_at', { ascending: false })
 
-    if (error || !data || data.length === 0) return MOCK_MATERIALS
+    if (error || !data) return []
     return data as Material[]
   } catch {
-    return MOCK_MATERIALS
+    return []
   }
 }
 
 export async function fetchLiveEvents(): Promise<EventItem[]> {
-  if (!isSupabaseConfigured()) return MOCK_EVENTS
+  if (!isSupabaseConfigured()) return []
 
   try {
     const supabase = createClient()
@@ -73,15 +65,15 @@ export async function fetchLiveEvents(): Promise<EventItem[]> {
       .select('*, profiles(*), subjects(*)')
       .order('start_time', { ascending: true })
 
-    if (error || !data || data.length === 0) return MOCK_EVENTS
+    if (error || !data) return []
     return data as EventItem[]
   } catch {
-    return MOCK_EVENTS
+    return []
   }
 }
 
 export async function fetchLivePolls(): Promise<Poll[]> {
-  if (!isSupabaseConfigured()) return MOCK_POLLS
+  if (!isSupabaseConfigured()) return []
 
   try {
     const supabase = createClient()
@@ -90,15 +82,15 @@ export async function fetchLivePolls(): Promise<Poll[]> {
       .select('*, profiles(*)')
       .order('created_at', { ascending: false })
 
-    if (error || !data || data.length === 0) return MOCK_POLLS
+    if (error || !data) return []
     return data as Poll[]
   } catch {
-    return MOCK_POLLS
+    return []
   }
 }
 
 export async function fetchLiveDeadlines(): Promise<Deadline[]> {
-  if (!isSupabaseConfigured()) return MOCK_DEADLINES
+  if (!isSupabaseConfigured()) return []
 
   try {
     const supabase = createClient()
@@ -107,15 +99,15 @@ export async function fetchLiveDeadlines(): Promise<Deadline[]> {
       .select('*, subjects(*)')
       .order('due_date', { ascending: true })
 
-    if (error || !data || data.length === 0) return MOCK_DEADLINES
+    if (error || !data) return []
     return data as Deadline[]
   } catch {
-    return MOCK_DEADLINES
+    return []
   }
 }
 
 export async function fetchLiveSubjects(): Promise<Subject[]> {
-  if (!isSupabaseConfigured()) return MOCK_SUBJECTS
+  if (!isSupabaseConfigured()) return []
 
   try {
     const supabase = createClient()
@@ -124,15 +116,15 @@ export async function fetchLiveSubjects(): Promise<Subject[]> {
       .select('*')
       .order('sort_order', { ascending: true })
 
-    if (error || !data || data.length === 0) return MOCK_SUBJECTS
+    if (error || !data) return []
     return data as Subject[]
   } catch {
-    return MOCK_SUBJECTS
+    return []
   }
 }
 
 export async function fetchLiveChannels(): Promise<Channel[]> {
-  if (!isSupabaseConfigured()) return MOCK_CHANNELS
+  if (!isSupabaseConfigured()) return []
 
   try {
     const supabase = createClient()
@@ -141,9 +133,26 @@ export async function fetchLiveChannels(): Promise<Channel[]> {
       .select('*')
       .order('created_at', { ascending: true })
 
-    if (error || !data || data.length === 0) return MOCK_CHANNELS
+    if (error || !data) return []
     return data as Channel[]
   } catch {
-    return MOCK_CHANNELS
+    return []
+  }
+}
+
+export async function fetchLiveLabs(): Promise<Lab[]> {
+  if (!isSupabaseConfigured()) return []
+
+  try {
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from('labs')
+      .select('*')
+      .order('sort_order', { ascending: true })
+
+    if (error || !data) return []
+    return data as Lab[]
+  } catch {
+    return []
   }
 }

@@ -2,9 +2,8 @@
 
 import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { useDropzone } from 'react-dropzone'
+import { useDropzone, FileRejection } from 'react-dropzone'
 import { useAppStore } from '@/store/useAppStore'
-import { MOCK_LABS, MOCK_MATERIALS } from '@/lib/mock-data'
 import { MAX_FILE_SIZE_BYTES } from '@/lib/constants'
 import { formatBytes } from '@/lib/utils'
 import {
@@ -13,9 +12,6 @@ import {
   Video,
   X,
   Loader2,
-  CheckCircle2,
-  AlertCircle,
-  Tag,
   ArrowRight,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -36,7 +32,10 @@ export default function MaterialUploadPage() {
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
 
-  const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: any[]) => {
+  // Labs would come from a store or API keyed by subject — for now initialize empty
+  const availableLabs: { id: string; name: string; subject_id: string; sort_order: number }[] = []
+
+  const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: FileRejection[]) => {
     if (rejectedFiles && rejectedFiles.length > 0) {
       const err = rejectedFiles[0]?.errors?.[0]?.message
       toast.error(err || 'File rejected. Make sure size is under 100MB.')
@@ -62,8 +61,6 @@ export default function MaterialUploadPage() {
     maxFiles: 1,
     maxSize: MAX_FILE_SIZE_BYTES,
   })
-
-  const availableLabs = MOCK_LABS.filter((l) => l.subject_id === subjectId)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -145,6 +142,7 @@ export default function MaterialUploadPage() {
             resolve(true)
           }
 
+          void reject // keep the type checker happy
           xhr.send(file)
         })
 
@@ -174,17 +172,16 @@ export default function MaterialUploadPage() {
         subject_id: subjectId || null,
         lab_id: labId || null,
         tags: tags.length > 0 ? tags : null,
-        uploaded_by: user?.id || 'user-demo-admin-1',
-        sort_order: MOCK_MATERIALS.length + 1,
+        uploaded_by: user?.id || null,
+        sort_order: 1,
         is_hidden: false,
         download_count: 0,
         created_at: new Date().toISOString(),
         profiles: user,
         subjects: selectedSubject || null,
-        labs: selectedLab || null,
+        labs: selectedLab ? { ...selectedLab, created_at: new Date().toISOString() } : null,
       }
 
-      MOCK_MATERIALS.unshift(newMaterial)
       toast.success('Material published successfully!')
       router.push(`/materials/${newMaterial.id}`)
     } catch (err: unknown) {
@@ -198,32 +195,30 @@ export default function MaterialUploadPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in duration-200">
       <div>
-        <h1 className="text-2xl font-bold font-display text-white flex items-center gap-2">
-          <Upload className="w-6 h-6 text-[#4F6EF7]" /> Upload Study Material
+        <h1 className="text-2xl font-bold font-display text-primary flex items-center gap-2">
+          <Upload className="w-6 h-6 text-indigo-500" /> Upload Study Material
         </h1>
-        <p className="text-sm text-[#8B91A8] mt-1">
+        <p className="text-sm text-muted mt-1">
           Share lecture slides, lab manuals, sample code, or YouTube lecture links with your class.
         </p>
       </div>
 
-      <div className="bg-[#1A1D27] border border-[#2D3148] rounded-2xl p-6 sm:p-8 space-y-6 shadow-xl">
+      <div className="bg-card border border-border rounded-2xl p-6 sm:p-8 space-y-6 shadow-xl">
         {/* Toggle Mode: File vs Video URL */}
-        <div className="flex bg-[#0F1117] p-1 rounded-xl border border-[#2D3148]">
+        <div className="flex bg-page p-1 rounded-xl border border-border">
           <button
             type="button"
             onClick={() => setMode('file')}
-            className={`flex-1 py-2 rounded-lg text-xs font-medium flex items-center justify-center gap-2 transition-all cursor-pointer ${
-              mode === 'file' ? 'bg-[#4F6EF7] text-white shadow-sm' : 'text-[#8B91A8] hover:text-white'
-            }`}
+            className={`flex-1 py-2 rounded-lg text-xs font-medium flex items-center justify-center gap-2 transition-all cursor-pointer ${mode === 'file' ? 'bg-indigo-600 text-white shadow-sm' : 'text-muted hover:text-primary'
+              }`}
           >
             <FileText className="w-4 h-4" /> Upload Document / Code (100MB Cap)
           </button>
           <button
             type="button"
             onClick={() => setMode('video')}
-            className={`flex-1 py-2 rounded-lg text-xs font-medium flex items-center justify-center gap-2 transition-all cursor-pointer ${
-              mode === 'video' ? 'bg-[#4F6EF7] text-white shadow-sm' : 'text-[#8B91A8] hover:text-white'
-            }`}
+            className={`flex-1 py-2 rounded-lg text-xs font-medium flex items-center justify-center gap-2 transition-all cursor-pointer ${mode === 'video' ? 'bg-indigo-600 text-white shadow-sm' : 'text-muted hover:text-primary'
+              }`}
           >
             <Video className="w-4 h-4" /> YouTube / Drive Video Link
           </button>
@@ -233,25 +228,25 @@ export default function MaterialUploadPage() {
           {/* File Drag and Drop Zone */}
           {mode === 'file' && (
             <div>
-              <label className="block text-xs font-mono font-medium text-[#8B91A8] uppercase tracking-wider mb-2">
+              <label className="block text-xs font-mono font-medium text-muted uppercase tracking-wider mb-2">
                 File Attachment (PDF, DOCX, Code, Zip, Images)
               </label>
 
               {file ? (
-                <div className="bg-[#0F1117] border border-[#4F6EF7]/40 rounded-xl p-4 flex items-center justify-between">
+                <div className="bg-page border border-indigo-500/40 rounded-xl p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-[#4F6EF7]/20 flex items-center justify-center text-[#4F6EF7]">
+                    <div className="w-10 h-10 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-500">
                       <FileText className="w-5 h-5" />
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-white truncate max-w-xs">{file.name}</p>
-                      <p className="text-[10px] font-mono text-[#8B91A8]">{formatBytes(file.size)}</p>
+                      <p className="text-xs font-bold text-primary truncate max-w-xs">{file.name}</p>
+                      <p className="text-[10px] font-mono text-muted">{formatBytes(file.size)}</p>
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={() => setFile(null)}
-                    className="p-1.5 text-[#8B91A8] hover:text-red-400 rounded-lg hover:bg-[#242736]"
+                    className="p-1.5 text-muted hover:text-red-400 rounded-lg hover:bg-elevated"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -259,20 +254,19 @@ export default function MaterialUploadPage() {
               ) : (
                 <div
                   {...getRootProps()}
-                  className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
-                    isDragActive
-                      ? 'border-[#4F6EF7] bg-[#4F6EF7]/10'
-                      : 'border-[#2D3148] hover:border-[#4F6EF7]/50 bg-[#0F1117]/60'
-                  }`}
+                  className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${isDragActive
+                      ? 'border-indigo-500 bg-indigo-500/10'
+                      : 'border-border hover:border-indigo-500/50 bg-page/60'
+                    }`}
                 >
                   <input {...getInputProps()} />
-                  <div className="w-12 h-12 rounded-full bg-[#242736] border border-[#2D3148] flex items-center justify-center mx-auto mb-3 text-[#4F6EF7]">
+                  <div className="w-12 h-12 rounded-full bg-elevated border border-border flex items-center justify-center mx-auto mb-3 text-indigo-500">
                     <Upload className="w-6 h-6" />
                   </div>
-                  <p className="text-xs font-bold text-white">
+                  <p className="text-xs font-bold text-primary">
                     {isDragActive ? 'Drop your file here...' : 'Click to upload or drag & drop'}
                   </p>
-                  <p className="text-[11px] text-[#8B91A8] font-mono mt-1">
+                  <p className="text-[11px] text-muted font-mono mt-1">
                     PDF, DOCX, PNG, JPG, .c, .py, .java, .js, .ts, ZIP (Max 100MB)
                   </p>
                 </div>
@@ -283,18 +277,18 @@ export default function MaterialUploadPage() {
           {/* Video URL Input */}
           {mode === 'video' && (
             <div>
-              <label className="block text-xs font-mono font-medium text-[#8B91A8] uppercase tracking-wider mb-2">
+              <label className="block text-xs font-mono font-medium text-muted uppercase tracking-wider mb-2">
                 Video Lecture URL (YouTube or Google Drive Share Link)
               </label>
               <div className="relative">
-                <Video className="w-4 h-4 text-[#8B91A8] absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <Video className="w-4 h-4 text-muted absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="url"
                   required
                   value={videoUrl}
                   onChange={(e) => setVideoUrl(e.target.value)}
                   placeholder="https://www.youtube.com/watch?v=..."
-                  className="w-full bg-[#0F1117] border border-[#2D3148] rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-[#8B91A8]/60 focus:outline-none focus:border-[#4F6EF7]"
+                  className="w-full bg-page border border-border rounded-xl pl-10 pr-4 py-2.5 text-xs text-primary placeholder-muted/60 focus:outline-none focus:border-indigo-500"
                 />
               </div>
             </div>
@@ -302,7 +296,7 @@ export default function MaterialUploadPage() {
 
           {/* Title */}
           <div>
-            <label className="block text-xs font-mono font-medium text-[#8B91A8] uppercase tracking-wider mb-2">
+            <label className="block text-xs font-mono font-medium text-muted uppercase tracking-wider mb-2">
               Title *
             </label>
             <input
@@ -311,14 +305,14 @@ export default function MaterialUploadPage() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. C Programming Lab 4 Array Problems"
-              className="w-full bg-[#0F1117] border border-[#2D3148] rounded-xl px-4 py-2.5 text-xs text-white placeholder-[#8B91A8]/60 focus:outline-none focus:border-[#4F6EF7]"
+              className="w-full bg-page border border-border rounded-xl px-4 py-2.5 text-xs text-primary placeholder-muted/60 focus:outline-none focus:border-indigo-500"
             />
           </div>
 
           {/* Subject & Lab Selectors */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-mono font-medium text-[#8B91A8] uppercase tracking-wider mb-2">
+              <label className="block text-xs font-mono font-medium text-muted uppercase tracking-wider mb-2">
                 Subject Classification
               </label>
               <select
@@ -327,7 +321,7 @@ export default function MaterialUploadPage() {
                   setSubjectId(e.target.value)
                   setLabId('')
                 }}
-                className="w-full bg-[#0F1117] border border-[#2D3148] rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-[#4F6EF7]"
+                className="w-full bg-page border border-border rounded-xl px-3 py-2.5 text-xs text-primary focus:outline-none focus:border-indigo-500"
               >
                 <option value="">General (No specific subject)</option>
                 {subjects.map((s) => (
@@ -339,14 +333,14 @@ export default function MaterialUploadPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-mono font-medium text-[#8B91A8] uppercase tracking-wider mb-2">
+              <label className="block text-xs font-mono font-medium text-muted uppercase tracking-wider mb-2">
                 Lab Experiment (Optional)
               </label>
               <select
                 value={labId}
                 disabled={!subjectId || availableLabs.length === 0}
                 onChange={(e) => setLabId(e.target.value)}
-                className="w-full bg-[#0F1117] border border-[#2D3148] rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-[#4F6EF7] disabled:opacity-50"
+                className="w-full bg-page border border-border rounded-xl px-3 py-2.5 text-xs text-primary focus:outline-none focus:border-indigo-500 disabled:opacity-50"
               >
                 <option value="">Lecture / General Notes</option>
                 {availableLabs.map((l) => (
@@ -360,7 +354,7 @@ export default function MaterialUploadPage() {
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-mono font-medium text-[#8B91A8] uppercase tracking-wider mb-2">
+            <label className="block text-xs font-mono font-medium text-muted uppercase tracking-wider mb-2">
               Description / Notes
             </label>
             <textarea
@@ -368,37 +362,34 @@ export default function MaterialUploadPage() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Briefly describe what this file contains..."
-              className="w-full bg-[#0F1117] border border-[#2D3148] rounded-xl px-4 py-2.5 text-xs text-white placeholder-[#8B91A8]/60 focus:outline-none focus:border-[#4F6EF7]"
+              className="w-full bg-page border border-border rounded-xl px-4 py-2.5 text-xs text-primary placeholder-muted/60 focus:outline-none focus:border-indigo-500"
             />
           </div>
 
           {/* Tags */}
           <div>
-            <label className="block text-xs font-mono font-medium text-[#8B91A8] uppercase tracking-wider mb-2">
+            <label className="block text-xs font-mono font-medium text-muted uppercase tracking-wider mb-2">
               Tags (Comma separated)
             </label>
-            <div className="relative">
-              <Tag className="w-4 h-4 text-[#8B91A8] absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={tagsInput}
-                onChange={(e) => setTagsInput(e.target.value)}
-                placeholder="e.g. c, arrays, solutions, exam"
-                className="w-full bg-[#0F1117] border border-[#2D3148] rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-[#8B91A8]/60 focus:outline-none focus:border-[#4F6EF7]"
-              />
-            </div>
+            <input
+              type="text"
+              value={tagsInput}
+              onChange={(e) => setTagsInput(e.target.value)}
+              placeholder="e.g. c, arrays, solutions, exam"
+              className="w-full bg-page border border-border rounded-xl px-4 py-2.5 text-xs text-primary placeholder-muted/60 focus:outline-none focus:border-indigo-500"
+            />
           </div>
 
           {/* Realtime Upload Progress Bar */}
           {uploading && (
             <div className="space-y-2 pt-2">
-              <div className="flex justify-between text-xs font-mono text-[#8B91A8]">
+              <div className="flex justify-between text-xs font-mono text-muted">
                 <span>Uploading direct to Cloudflare R2...</span>
                 <span>{uploadProgress}%</span>
               </div>
-              <div className="h-2 w-full bg-[#0F1117] rounded-full overflow-hidden border border-[#2D3148]">
+              <div className="h-2 w-full bg-page rounded-full overflow-hidden border border-border">
                 <div
-                  className="h-full bg-gradient-to-r from-[#4F6EF7] to-[#3B55D4] transition-all duration-200"
+                  className="h-full bg-gradient-to-r from-indigo-500 to-indigo-700 transition-all duration-200"
                   style={{ width: `${uploadProgress}%` }}
                 />
               </div>
@@ -409,7 +400,7 @@ export default function MaterialUploadPage() {
           <button
             type="submit"
             disabled={uploading}
-            className="w-full bg-[#4F6EF7] hover:bg-[#3B55D4] text-white font-medium py-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-[#4F6EF7]/20 disabled:opacity-50 cursor-pointer"
+            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20 disabled:opacity-50 cursor-pointer transition-colors"
           >
             {uploading ? (
               <>

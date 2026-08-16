@@ -11,17 +11,17 @@ export default function MobileNav() {
 
   return (
     <div className="fixed inset-0 z-50 md:hidden flex">
-      {/* Backdrop overlay */}
+      {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
         onClick={() => setSidebarOpen(false)}
       />
 
       {/* Drawer */}
-      <div className="relative z-10 w-[260px] h-full shadow-2xl animate-in slide-in-from-left duration-200">
+      <div className="relative z-10 w-[280px] h-full shadow-2xl animate-slide-in-left">
         <button
           onClick={() => setSidebarOpen(false)}
-          className="absolute top-4 right-3 text-[#8B91A8] hover:text-white p-1 rounded-lg hover:bg-[#242736] z-20"
+          className="absolute top-4 right-3 text-gray-400 hover:text-gray-900 dark:hover:text-white p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 z-20 transition-colors"
           aria-label="Close sidebar"
         >
           <X className="w-5 h-5" />

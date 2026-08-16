@@ -5,7 +5,7 @@ import type { NextRequest } from 'next/server'
 const AUTH_REQUIRED_PREFIXES = ['/materials/upload', '/chat', '/polls/create', '/events/create', '/deadlines/create', '/admin']
 const AUTH_PAGES = ['/login', '/register']
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
     request: {
       headers: request.headers,

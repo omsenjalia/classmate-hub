@@ -4,7 +4,6 @@ import { use, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAppStore } from '@/store/useAppStore'
-import { MOCK_MATERIALS } from '@/lib/mock-data'
 import { Material } from '@/lib/types'
 import { formatDate, formatBytes, getSubjectColor } from '@/lib/utils'
 import VideoEmbed from '@/components/materials/VideoEmbed'
@@ -17,7 +16,7 @@ import {
   Tag,
   Share2,
   Calendar,
-  Sparkles,
+  Eye,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -34,21 +33,36 @@ export default function MaterialDetailPage({
   const [downloadCount, setDownloadCount] = useState(0)
 
   useEffect(() => {
-    const found = MOCK_MATERIALS.find((m) => m.id === resolvedParams.id)
-    if (found) {
-      setMaterial(found)
-      setDownloadCount(found.download_count)
-    }
+    // In production this would fetch from Supabase by ID
+    // For now we show a not-found state since there's no local store of materials
+    setMaterial(null)
   }, [resolvedParams.id])
 
   if (!material) {
     return (
-      <div className="bg-[#1A1D27] border border-[#2D3148] rounded-2xl p-12 text-center space-y-4">
-        <h2 className="text-xl font-bold text-white font-display">Material Not Found</h2>
-        <p className="text-xs text-[#8B91A8]">The material link may have been moved or removed.</p>
-        <Link href="/materials" className="inline-block bg-[#4F6EF7] text-white text-xs font-medium px-4 py-2 rounded-lg">
-          Back to Materials
+      <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-200">
+        <Link
+          href="/materials"
+          className="inline-flex items-center gap-2 text-xs font-mono text-muted hover:text-primary transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" /> Back to Materials List
         </Link>
+
+        <div className="bg-card border border-border rounded-2xl p-16 text-center space-y-4">
+          <div className="w-14 h-14 rounded-full bg-elevated flex items-center justify-center mx-auto">
+            <Eye className="w-7 h-7 text-muted" />
+          </div>
+          <h2 className="text-xl font-bold text-primary font-display">Material Not Found</h2>
+          <p className="text-sm text-muted max-w-xs mx-auto">
+            The material link may have expired, been removed, or moved.
+          </p>
+          <Link
+            href="/materials"
+            className="inline-block bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium px-4 py-2 rounded-lg transition-colors"
+          >
+            Back to Materials
+          </Link>
+        </div>
       </div>
     )
   }
@@ -59,7 +73,6 @@ export default function MaterialDetailPage({
 
   const handleDownload = () => {
     setDownloadCount((prev) => prev + 1)
-    material.download_count += 1
     toast.success('Download started!')
 
     if (material.file_url) {
@@ -76,8 +89,6 @@ export default function MaterialDetailPage({
       if (material.file_key) {
         await fetch(`/api/upload/${material.file_key}`, { method: 'DELETE' })
       }
-      const idx = MOCK_MATERIALS.findIndex((m) => m.id === material.id)
-      if (idx !== -1) MOCK_MATERIALS.splice(idx, 1)
 
       toast.success('Material deleted')
       router.push('/materials')
@@ -98,13 +109,13 @@ export default function MaterialDetailPage({
       {/* Back Link */}
       <Link
         href="/materials"
-        className="inline-flex items-center gap-2 text-xs font-mono text-[#8B91A8] hover:text-white transition-colors"
+        className="inline-flex items-center gap-2 text-xs font-mono text-muted hover:text-primary transition-colors"
       >
         <ArrowLeft className="w-4 h-4" /> Back to Materials List
       </Link>
 
       {/* Main Header Card */}
-      <div className="bg-[#1A1D27] border border-[#2D3148] rounded-2xl p-6 sm:p-8 space-y-6 shadow-xl">
+      <div className="bg-card border border-border rounded-2xl p-6 sm:p-8 space-y-6 shadow-xl">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
@@ -124,19 +135,19 @@ export default function MaterialDetailPage({
               )}
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-bold font-display text-white leading-tight">
+            <h1 className="text-2xl sm:text-3xl font-bold font-display text-primary leading-tight">
               {material.title}
             </h1>
 
             {material.description && (
-              <p className="text-sm text-[#8B91A8] leading-relaxed">{material.description}</p>
+              <p className="text-sm text-muted leading-relaxed">{material.description}</p>
             )}
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={handleShare}
-              className="p-2.5 bg-[#242736] hover:bg-[#2D3148] border border-[#2D3148] text-[#E8EAF0] rounded-xl transition-colors cursor-pointer"
+              className="p-2.5 bg-elevated hover:bg-border border border-border text-primary rounded-xl transition-colors cursor-pointer"
               title="Share Link"
             >
               <Share2 className="w-4 h-4" />
@@ -154,7 +165,7 @@ export default function MaterialDetailPage({
 
             <button
               onClick={handleDownload}
-              className="bg-[#4F6EF7] hover:bg-[#3B55D4] text-white text-xs font-medium px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-[#4F6EF7]/20 cursor-pointer"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-indigo-500/20 cursor-pointer"
             >
               <Download className="w-4 h-4" /> Download ({downloadCount})
             </button>
@@ -162,14 +173,14 @@ export default function MaterialDetailPage({
         </div>
 
         {/* Uploader & Metadata Info Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-[#2D3148] text-xs text-[#8B91A8] font-mono">
+        <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-border text-xs text-muted font-mono">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-[#4F6EF7]/20 flex items-center justify-center text-[#4F6EF7]">
+            <div className="w-6 h-6 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-500">
               <User className="w-3.5 h-3.5" />
             </div>
             <span>
               Uploaded by{' '}
-              <strong className="text-white">
+              <strong className="text-primary">
                 {material.profiles?.display_name || material.profiles?.username || 'Classmate'}
               </strong>
             </span>
@@ -189,9 +200,9 @@ export default function MaterialDetailPage({
             {material.tags.map((tag) => (
               <span
                 key={tag}
-                className="text-xs font-mono bg-[#0F1117] border border-[#2D3148] text-[#8B91A8] px-2.5 py-1 rounded-lg flex items-center gap-1"
+                className="text-xs font-mono bg-page border border-border text-muted px-2.5 py-1 rounded-lg flex items-center gap-1"
               >
-                <Tag className="w-3 h-3 text-[#4F6EF7]" /> #{tag}
+                <Tag className="w-3 h-3 text-indigo-500" /> #{tag}
               </span>
             ))}
           </div>
@@ -200,14 +211,14 @@ export default function MaterialDetailPage({
 
       {/* Document / Video Preview Section */}
       <div className="space-y-3">
-        <h2 className="text-sm font-mono font-bold uppercase tracking-wider text-[#8B91A8] flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-[#4F6EF7]" /> Resource Interactive Preview
+        <h2 className="text-sm font-mono font-bold uppercase tracking-wider text-muted flex items-center gap-2">
+          <FileText className="w-4 h-4 text-indigo-500" /> Resource Preview
         </h2>
 
         {material.video_url ? (
           <VideoEmbed url={material.video_url} />
         ) : material.file_url ? (
-          <div className="bg-[#1A1D27] border border-[#2D3148] rounded-2xl overflow-hidden shadow-xl min-h-[500px] flex flex-col">
+          <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-xl min-h-[500px] flex flex-col">
             {material.file_type === 'pdf' ? (
               <iframe
                 src={material.file_url}
@@ -219,25 +230,16 @@ export default function MaterialDetailPage({
               <img
                 src={material.file_url}
                 alt={material.title}
-                className="w-full max-h-[600px] object-contain p-4 bg-[#0F1117]"
+                className="w-full max-h-[600px] object-contain p-4 bg-page"
               />
             ) : (
-              <div className="p-6 font-mono text-xs text-[#E8EAF0] bg-[#0F1117] overflow-x-auto space-y-4">
-                <div className="flex items-center justify-between border-b border-[#2D3148] pb-3 text-[#8B91A8]">
+              <div className="p-6 font-mono text-xs text-primary bg-page overflow-x-auto space-y-4">
+                <div className="flex items-center justify-between border-b border-border pb-3 text-muted">
                   <span>{material.file_name || 'source_code'}</span>
                   <span>Syntax Highlighting</span>
                 </div>
                 <pre className="text-emerald-400 leading-relaxed">
-                  {`/* ClassmateHub Resource: ${material.title} */
-// Subject: ${material.subjects?.name || 'General'}
-// Date: ${formatDate(material.created_at)}
-
-#include <stdio.h>
-
-int main() {
-    printf("ClassmateHub Code Preview Solution\\n");
-    return 0;
-}`}
+                  {`/* ClassmateHub Resource: ${material.title} */\n// Subject: ${material.subjects?.name || 'General'}\n// Date: ${formatDate(material.created_at)}\n\n#include <stdio.h>\n\nint main() {\n    printf("ClassmateHub Code Preview\\n");\n    return 0;\n}`}
                 </pre>
               </div>
             )}

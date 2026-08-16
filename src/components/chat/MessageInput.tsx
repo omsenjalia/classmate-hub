@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { Send, Bold, Code, Sparkles } from 'lucide-react'
+import { Send, Bold, Code } from 'lucide-react'
 
 export default function MessageInput({
   onSendMessage,
@@ -36,13 +36,13 @@ export default function MessageInput({
   }
 
   return (
-    <div className="bg-[#1A1D27] border border-[#2D3148] rounded-2xl p-3 space-y-2 shadow-xl">
+    <div className="bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-2xl p-3 space-y-2 shadow-sm">
       {/* Markdown Helper Toolbar */}
-      <div className="flex items-center gap-1 border-b border-[#2D3148] pb-2 text-[#8B91A8]">
+      <div className="flex items-center gap-1 border-b border-gray-200 dark:border-gray-700 pb-2 text-gray-400 dark:text-gray-500">
         <button
           type="button"
           onClick={() => insertMarkdown('**', '**')}
-          className="p-1.5 hover:text-white rounded hover:bg-[#242736] transition-colors"
+          className="p-1.5 hover:text-gray-700 dark:hover:text-white rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
           title="Bold"
         >
           <Bold className="w-3.5 h-3.5" />
@@ -50,13 +50,13 @@ export default function MessageInput({
         <button
           type="button"
           onClick={() => insertMarkdown('```\n', '\n```')}
-          className="p-1.5 hover:text-white rounded hover:bg-[#242736] transition-colors"
+          className="p-1.5 hover:text-gray-700 dark:hover:text-white rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
           title="Code Block"
         >
           <Code className="w-3.5 h-3.5" />
         </button>
-        <span className="text-[10px] font-mono text-[#8B91A8] ml-auto">
-          Press <kbd className="bg-[#0F1117] px-1 rounded border border-[#2D3148]">Enter</kbd> to send
+        <span className="text-[11px] font-mono text-gray-400 dark:text-gray-500 ml-auto">
+          Press <kbd className="bg-gray-100 dark:bg-gray-900/50 px-1 rounded border border-gray-200 dark:border-gray-600">Enter</kbd> to send
         </span>
       </div>
 
@@ -69,14 +69,14 @@ export default function MessageInput({
           onChange={(e) => setContent(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={`Message #${channelName}...`}
-          className="flex-1 bg-[#0F1117] border border-[#2D3148] focus:border-[#4F6EF7] rounded-xl p-3 text-xs text-white placeholder-[#8B91A8]/60 focus:outline-none resize-none"
+          className="flex-1 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-600 focus:border-indigo-500 dark:focus:border-indigo-400 rounded-xl p-3 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none resize-none"
         />
 
         <button
           type="button"
           onClick={handleSend}
           disabled={!content.trim()}
-          className="bg-[#4F6EF7] hover:bg-[#3B55D4] text-white p-3 rounded-xl transition-all shadow-md shadow-[#4F6EF7]/20 disabled:opacity-50 cursor-pointer shrink-0"
+          className="bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-xl transition-all shadow-md shadow-indigo-600/20 disabled:opacity-50 cursor-pointer shrink-0"
         >
           <Send className="w-4 h-4" />
         </button>

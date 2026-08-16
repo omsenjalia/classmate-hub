@@ -2,61 +2,165 @@
 
 @layer base {
   :root {
-    --background: #0F1117;
-    --foreground: #E8EAF0;
-    --surface-1: #0F1117;
-    --surface-2: #1A1D27;
-    --surface-3: #242736;
-    --border-color: #2D3148;
-    --muted-color: #8B91A8;
-    --accent-blue: #4F6EF7;
-    --accent-blue-hover: #3B55D4;
+    /* ─── Light Theme Tokens ─── */
+    --color-bg: 0 0% 98%;
+    --color-surface-1: 0 0% 100%;
+    --color-surface-2: 220 14% 96%;
+    --color-surface-3: 220 13% 91%;
+    --color-border: 220 13% 87%;
+    --color-border-subtle: 220 13% 91%;
+    --color-text: 220 15% 15%;
+    --color-text-secondary: 220 10% 44%;
+    --color-text-muted: 220 10% 58%;
+    --color-accent: 228 76% 59%;
+    --color-accent-hover: 228 76% 50%;
+    --color-accent-subtle: 228 76% 95%;
+    --color-accent-muted: 228 60% 80%;
+
+    --color-success: 152 60% 40%;
+    --color-warning: 38 92% 50%;
+    --color-danger: 0 72% 51%;
+
+    --shadow-sm: 0 1px 2px hsl(0 0% 0% / 0.04);
+    --shadow-md: 0 4px 12px hsl(0 0% 0% / 0.06);
+    --shadow-lg: 0 8px 24px hsl(0 0% 0% / 0.08);
+    --shadow-xl: 0 16px 48px hsl(0 0% 0% / 0.1);
+
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 18px;
+  }
+
+  .dark {
+    /* ─── Dark Theme Tokens ─── */
+    --color-bg: 225 20% 7%;
+    --color-surface-1: 225 16% 11%;
+    --color-surface-2: 225 15% 15%;
+    --color-surface-3: 225 14% 19%;
+    --color-border: 228 18% 22%;
+    --color-border-subtle: 228 16% 18%;
+    --color-text: 225 20% 93%;
+    --color-text-secondary: 225 12% 62%;
+    --color-text-muted: 225 10% 46%;
+    --color-accent: 228 76% 59%;
+    --color-accent-hover: 228 80% 52%;
+    --color-accent-subtle: 228 50% 16%;
+    --color-accent-muted: 228 40% 30%;
+
+    --color-success: 152 60% 45%;
+    --color-warning: 38 92% 55%;
+    --color-danger: 0 72% 55%;
+
+    --shadow-sm: 0 1px 2px hsl(0 0% 0% / 0.2);
+    --shadow-md: 0 4px 12px hsl(0 0% 0% / 0.3);
+    --shadow-lg: 0 8px 24px hsl(0 0% 0% / 0.35);
+    --shadow-xl: 0 16px 48px hsl(0 0% 0% / 0.4);
   }
 
   body {
-    background-color: var(--background);
-    color: var(--foreground);
+    background-color: hsl(var(--color-bg));
+    color: hsl(var(--color-text));
     font-family: var(--font-dm-sans), system-ui, -apple-system, sans-serif;
     overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
-  h1, h2, h3, .font-display {
-    font-family: var(--font-dm-serif), Georgia, serif;
+  h1, h2, h3 {
+    font-family: var(--font-dm-sans), system-ui, sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.01em;
   }
 
   code, pre, .font-mono {
-    font-family: var(--font-jetbrains-mono), monospace;
+    font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
   }
 }
 
-/* Custom Scrollbars */
+/* ─── Scrollbars ─── */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0F1117;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2D3148;
+  background: hsl(var(--color-border));
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3B55D4;
+  background: hsl(var(--color-accent));
 }
 
-/* Custom utilities */
-.bg-surface-1 { background-color: #0F1117; }
-.bg-surface-2 { background-color: #1A1D27; }
-.bg-surface-3 { background-color: #242736; }
-.border-surface-border { border-color: #2D3148; }
+/* ─── Semantic Surface Classes ─── */
+.bg-page { background-color: hsl(var(--color-bg)); }
+.bg-card { background-color: hsl(var(--color-surface-1)); }
+.bg-elevated { background-color: hsl(var(--color-surface-2)); }
+.bg-inset { background-color: hsl(var(--color-surface-3)); }
+.border-default { border-color: hsl(var(--color-border)); }
+.border-subtle { border-color: hsl(var(--color-border-subtle)); }
+.text-primary { color: hsl(var(--color-text)); }
+.text-secondary { color: hsl(var(--color-text-secondary)); }
+.text-muted { color: hsl(var(--color-text-muted)); }
+.text-accent { color: hsl(var(--color-accent)); }
 
+.shadow-card { box-shadow: var(--shadow-sm); }
+.shadow-elevated { box-shadow: var(--shadow-md); }
+.shadow-modal { box-shadow: var(--shadow-xl); }
+
+/* ─── Glass Panel ─── */
 .glass-panel {
-  background: rgba(26, 29, 39, 0.75);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(45, 49, 72, 0.6);
+  background: hsl(var(--color-surface-1) / 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid hsl(var(--color-border) / 0.6);
 }
 
-.hover-glow:hover {
-  box-shadow: 0 0 20px -3px rgba(79, 110, 247, 0.25);
+/* ─── Focus ring ─── */
+.focus-ring:focus-visible {
+  outline: 2px solid hsl(var(--color-accent));
+  outline-offset: 2px;
+}
+
+/* ─── Safe area for mobile notches ─── */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* ─── Animations ─── */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(100%); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-in-left {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.25s ease-out;
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 0.2s ease-out;
+}
+
+/* ─── Selection ─── */
+::selection {
+  background: hsl(var(--color-accent) / 0.2);
+  color: hsl(var(--color-text));
 }

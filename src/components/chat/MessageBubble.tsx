@@ -46,7 +46,7 @@ export default function MessageBubble({
           return (
             <pre
               key={idx}
-              className="my-2 p-3 bg-[#0F1117] border border-[#2D3148] rounded-lg font-mono text-xs text-emerald-400 overflow-x-auto leading-relaxed"
+              className="my-2 p-3 bg-gray-100 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-700 rounded-lg font-mono text-xs text-emerald-700 dark:text-emerald-400 overflow-x-auto leading-relaxed"
             >
               {part.trim()}
             </pre>
@@ -60,14 +60,14 @@ export default function MessageBubble({
   }
 
   return (
-    <div className="group relative flex items-start gap-3 p-3 rounded-xl hover:bg-[#1A1D27]/80 transition-colors">
+    <div className="group relative flex items-start gap-3 p-3 rounded-xl hover:bg-gray-100/60 dark:hover:bg-gray-800/60 transition-colors">
       {/* User Avatar */}
-      <div className="w-9 h-9 rounded-full bg-[#4F6EF7]/20 border border-[#4F6EF7]/40 flex items-center justify-center shrink-0 overflow-hidden mt-0.5">
+      <div className="w-9 h-9 rounded-full bg-indigo-100 dark:bg-indigo-500/20 border border-indigo-200 dark:border-indigo-500/40 flex items-center justify-center shrink-0 overflow-hidden mt-0.5">
         {author.avatar_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={author.avatar_url} alt={author.username} className="w-full h-full object-cover" />
         ) : (
-          <span className="text-xs font-bold text-[#4F6EF7]">
+          <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400">
             {author.username.charAt(0).toUpperCase()}
           </span>
         )}
@@ -76,18 +76,18 @@ export default function MessageBubble({
       {/* Message Body */}
       <div className="flex-1 min-w-0 space-y-1">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs font-bold text-white font-display">
+          <span className="text-sm font-bold text-gray-900 dark:text-white">
             {author.display_name || author.username}
           </span>
-          <span className="text-[10px] font-mono text-[#8B91A8]">@{author.username}</span>
+          <span className="text-xs font-mono text-gray-500 dark:text-gray-400">@{author.username}</span>
 
           {author.role === 'admin' && (
-            <span className="inline-flex items-center gap-0.5 text-[9px] bg-amber-500/20 text-amber-300 font-mono px-1.5 py-0.2 rounded border border-amber-500/30">
+            <span className="inline-flex items-center gap-0.5 text-[9px] bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 font-mono px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-500/30">
               <ShieldCheck className="w-2.5 h-2.5" /> ADMIN
             </span>
           )}
 
-          <span className="text-[10px] font-mono text-[#8B91A8] ml-auto">
+          <span className="text-[11px] font-mono text-gray-400 dark:text-gray-500 ml-auto">
             {formatRelativeTime(message.created_at)}
             {message.edited_at && ' (edited)'}
           </span>
@@ -98,26 +98,26 @@ export default function MessageBubble({
             <textarea
               value={editContent}
               onChange={(e) => setEditContent(e.target.value)}
-              className="w-full bg-[#0F1117] border border-[#4F6EF7] rounded-lg p-2 text-xs text-white focus:outline-none"
+              className="w-full bg-gray-50 dark:bg-gray-900/50 border border-indigo-500 dark:border-indigo-400 rounded-lg p-2 text-sm text-gray-900 dark:text-white focus:outline-none"
               rows={2}
             />
             <div className="flex items-center justify-end gap-2">
               <button
                 onClick={() => setIsEditing(false)}
-                className="p-1 text-[#8B91A8] hover:text-white rounded"
+                className="p-1 text-gray-400 hover:text-gray-700 dark:hover:text-white rounded cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
               <button
                 onClick={handleSaveEdit}
-                className="p-1 bg-[#4F6EF7] text-white rounded hover:bg-[#3B55D4]"
+                className="p-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 cursor-pointer"
               >
                 <Check className="w-4 h-4" />
               </button>
             </div>
           </div>
         ) : (
-          <div className="text-xs text-[#E8EAF0] leading-relaxed break-words">
+          <div className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed break-words">
             {renderFormattedContent(message.content)}
           </div>
         )}
@@ -125,11 +125,11 @@ export default function MessageBubble({
 
       {/* Hover Action Buttons */}
       {!isEditing && (
-        <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute right-3 top-2 bg-[#242736] border border-[#2D3148] rounded-lg flex items-center p-0.5 shadow-md">
+        <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute right-3 top-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg flex items-center p-0.5 shadow-md">
           {isOwner && (
             <button
               onClick={() => setIsEditing(true)}
-              className="p-1 text-[#8B91A8] hover:text-white rounded hover:bg-[#2D3148]"
+              className="p-1 text-gray-400 hover:text-gray-700 dark:hover:text-white rounded hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer"
               title="Edit Message"
             >
               <Edit2 className="w-3.5 h-3.5" />
@@ -139,7 +139,7 @@ export default function MessageBubble({
           {canDelete && (
             <button
               onClick={() => onDelete(message.id)}
-              className="p-1 text-[#8B91A8] hover:text-red-400 rounded hover:bg-[#2D3148]"
+              className="p-1 text-gray-400 hover:text-red-500 rounded hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer"
               title="Delete Message"
             >
               <Trash2 className="w-3.5 h-3.5" />

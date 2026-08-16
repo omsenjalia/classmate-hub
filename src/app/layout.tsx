@@ -1,18 +1,11 @@
 import type { Metadata } from 'next'
-import { DM_Sans, DM_Serif_Display, JetBrains_Mono } from 'next/font/google'
+import { DM_Sans, JetBrains_Mono } from 'next/font/google'
 import { Toaster } from 'react-hot-toast'
 import './globals.css'
 
 const dmSans = DM_Sans({
   subsets: ['latin'],
   variable: '--font-dm-sans',
-  display: 'swap',
-})
-
-const dmSerif = DM_Serif_Display({
-  weight: '400',
-  subsets: ['latin'],
-  variable: '--font-dm-serif',
   display: 'swap',
 })
 
@@ -23,8 +16,9 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'ClassmateHub | BVM IT Department Class Platform',
-  description: 'All-in-one community platform for course materials, lab guides, real-time chat, deadlines, and polls.',
+  title: 'ClassmateHub — BVM IT Department',
+  description:
+    'Class platform for course materials, lab guides, real-time chat, deadlines, and polls for BVM Engineering IT students.',
 }
 
 export default function RootLayout({
@@ -35,20 +29,31 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${dmSans.variable} ${dmSerif.variable} ${jetbrainsMono.variable} dark`}
+      className={`${dmSans.variable} ${jetbrainsMono.variable} dark`}
+      suppressHydrationWarning
     >
-      <body className="bg-[#0F1117] text-[#E8EAF0] antialiased min-h-screen selection:bg-[#4F6EF7]/30 selection:text-white">
+      <head>
+        {/* Inline script to set theme before paint to prevent flash */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                const stored = localStorage.getItem('classmatehub-theme');
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                const theme = stored || (prefersDark ? 'dark' : 'light');
+                document.documentElement.classList.toggle('dark', theme === 'dark');
+              } catch(e) {}
+            `,
+          }}
+        />
+      </head>
+      <body className="antialiased min-h-screen bg-page text-primary">
         <Toaster
           position="top-right"
           toastOptions={{
-            duration: 4000,
-            style: {
-              background: '#1A1D27',
-              color: '#E8EAF0',
-              border: '1px solid #2D3148',
-              borderRadius: '8px',
-              fontSize: '14px',
-            },
+            duration: 3500,
+            className:
+              '!bg-white dark:!bg-[hsl(225,16%,11%)] !text-gray-900 dark:!text-gray-100 !border !border-gray-200 dark:!border-[hsl(228,18%,22%)] !rounded-xl !text-sm !shadow-lg',
           }}
         />
         {children}

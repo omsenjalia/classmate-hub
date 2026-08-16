@@ -1,14 +1,18 @@
 'use client'
 
-import { useState } from 'react'
-import { MOCK_ANNOUNCEMENTS } from '@/lib/mock-data'
+import { useState, useEffect } from 'react'
+import { fetchLiveAnnouncements } from '@/lib/supabase-data'
 import { Announcement } from '@/lib/types'
 import { formatDate } from '@/lib/utils'
 import { Megaphone, Pin, Plus, Trash2, CheckCircle2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function AdminAnnouncementsPage() {
-  const [announcements, setAnnouncements] = useState<Announcement[]>(MOCK_ANNOUNCEMENTS)
+  const [announcements, setAnnouncements] = useState<Announcement[]>([])
+
+  useEffect(() => {
+    fetchLiveAnnouncements().then(setAnnouncements)
+  }, [])
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [isPinned, setIsPinned] = useState(true)

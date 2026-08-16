@@ -1,6 +1,14 @@
 import { create } from 'zustand'
 import { Profile, Subject, Channel } from '@/lib/types'
-import { MOCK_USER, MOCK_SUBJECTS, MOCK_CHANNELS } from '@/lib/mock-data'
+
+type ThemeMode = 'dark' | 'light'
+
+function getInitialTheme(): ThemeMode {
+  if (typeof window === 'undefined') return 'dark'
+  const stored = localStorage.getItem('classmatehub-theme')
+  if (stored === 'light' || stored === 'dark') return stored
+  return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
+}
 
 interface AppState {
   user: Profile | null
@@ -10,7 +18,7 @@ interface AppState {
   activeChannelId: string | null
   searchQuery: string
   sidebarOpen: boolean
-  theme: 'dark' | 'light'
+  theme: ThemeMode
 
   // Actions
   setUser: (user: Profile | null) => void
@@ -20,16 +28,17 @@ interface AppState {
   setSearchQuery: (query: string) => void
   toggleSidebar: () => void
   setSidebarOpen: (open: boolean) => void
-  setTheme: (theme: 'dark' | 'light') => void
+  setTheme: (theme: ThemeMode) => void
+  toggleTheme: () => void
   logout: () => void
 }
 
-export const useAppStore = create<AppState>((set) => ({
+export const useAppStore = create<AppState>((set, get) => ({
   user: null,
   isLoggedIn: false,
-  subjects: MOCK_SUBJECTS,
-  channels: MOCK_CHANNELS,
-  activeChannelId: 'chan-gen',
+  subjects: [],
+  channels: [],
+  activeChannelId: null,
   searchQuery: '',
   sidebarOpen: false,
   theme: 'dark',
@@ -41,6 +50,16 @@ export const useAppStore = create<AppState>((set) => ({
   setSearchQuery: (query) => set({ searchQuery: query }),
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
-  setTheme: (theme) => set({ theme }),
+  setTheme: (theme) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('classmatehub-theme', theme)
+      document.documentElement.classList.toggle('dark', theme === 'dark')
+    }
+    set({ theme })
+  },
+  toggleTheme: () => {
+    const next = get().theme === 'dark' ? 'light' : 'dark'
+    get().setTheme(next)
+  },
   logout: () => set({ user: null, isLoggedIn: false }),
 }))
