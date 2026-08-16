@@ -23,6 +23,23 @@ export default function LoginPage() {
     }
 
     setLoading(true)
+
+    // Helper: create a local/offline session from email
+    const localLogin = (role: 'student' | 'admin' = 'student') => {
+      const nameFromEmail = email.split('@')[0] || 'Student'
+      setUser({
+        id: 'user-' + Date.now(),
+        username: nameFromEmail,
+        display_name: nameFromEmail,
+        avatar_url: null,
+        bio: null,
+        role,
+        created_at: new Date().toISOString(),
+      })
+      toast.success(`Welcome back, ${nameFromEmail}!`)
+      router.push('/dashboard')
+    }
+
     try {
       const supabase = createClient()
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -31,30 +48,27 @@ export default function LoginPage() {
       })
 
       if (error) {
-        if (
+        // Supabase not configured / placeholder creds / network unreachable — use local session
+        const isMisconfigured =
           error.message?.includes('Invalid API key') ||
           error.message?.includes('apiKey') ||
           error.message?.includes('secret API key') ||
-          error.message?.includes('placeholder')
-        ) {
-          // Fallback login with entered details if Supabase credentials are missing/misconfigured
-          const nameFromEmail = email.split('@')[0]
-          setUser({
-            id: 'user-' + Date.now(),
-            username: nameFromEmail,
-            display_name: nameFromEmail,
-            avatar_url: null,
-            bio: null,
-            role: 'student',
-            created_at: new Date().toISOString(),
-          })
-          toast.success(`Welcome back, ${nameFromEmail}!`)
-          router.push('/dashboard')
+          error.message?.includes('placeholder') ||
+          error.message?.toLowerCase().includes('fetch') ||
+          (error as { status?: number }).status === 0
+
+        if (isMisconfigured) {
+          localLogin()
           return
         }
-        toast.error(error.message || 'Login failed')
-      } else if (data.user) {
-        // Fetch profile
+
+        // Real auth error — wrong password, user not found, etc.
+        toast.error(error.message || 'Login failed. Check your credentials.')
+        return
+      }
+
+      if (data.user) {
+        // Fetch full profile from DB
         const { data: profile } = await supabase
           .from('profiles')
           .select('*')
@@ -79,19 +93,8 @@ export default function LoginPage() {
         router.push('/dashboard')
       }
     } catch {
-      // Fallback for offline/demo preview mode
-      const nameFromEmail = email.split('@')[0] || 'Student'
-      setUser({
-        id: 'user-' + Date.now(),
-        username: nameFromEmail,
-        display_name: nameFromEmail,
-        avatar_url: null,
-        bio: null,
-        role: 'student',
-        created_at: new Date().toISOString(),
-      })
-      toast.success(`Welcome back, ${nameFromEmail}!`)
-      router.push('/dashboard')
+      // Network error / Supabase completely unreachable — fall back to local session
+      localLogin()
     } finally {
       setLoading(false)
     }
