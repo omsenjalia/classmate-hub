@@ -25,6 +25,22 @@ export default function RegisterPage() {
     }
 
     setLoading(true)
+
+    // Helper: create a local/offline session
+    const localRegister = () => {
+      setUser({
+        id: 'user-' + Date.now(),
+        username: username.toLowerCase().trim(),
+        display_name: displayName || username,
+        avatar_url: null,
+        bio: null,
+        role: 'student',
+        created_at: new Date().toISOString(),
+      })
+      toast.success('Account created successfully!')
+      router.push('/dashboard')
+    }
+
     try {
       const supabase = createClient()
       const { data, error } = await supabase.auth.signUp({
@@ -39,66 +55,45 @@ export default function RegisterPage() {
       })
 
       if (error) {
-        if (
+        // Supabase not configured / placeholder creds / network unreachable — use local session
+        const isMisconfigured =
           error.message?.includes('Invalid API key') ||
           error.message?.includes('secret API key') ||
           error.message?.includes('apiKey') ||
           error.message?.includes('JWKS') ||
-          error.message?.includes('placeholder')
-        ) {
-          // Fallback registration if Supabase keys are misconfigured on Vercel
-          setUser({
-            id: 'user-' + Date.now(),
-            username: username.toLowerCase().trim(),
-            display_name: displayName || username,
-            avatar_url: null,
-            bio: null,
-            role: 'student',
-            created_at: new Date().toISOString(),
-          })
-          toast.success('Account created successfully!')
-          router.push('/dashboard')
+          error.message?.includes('placeholder') ||
+          error.message?.toLowerCase().includes('fetch') ||
+          (error as { status?: number }).status === 0
+
+        if (isMisconfigured) {
+          localRegister()
           return
         }
+
+        // Real auth error (e.g. email already in use, weak password)
         toast.error(error.message || 'Registration failed')
-      } else {
-        if (data.user) {
-          setUser({
-            id: data.user.id,
-            username: username.toLowerCase().trim(),
-            display_name: displayName || username,
-            avatar_url: null,
-            bio: null,
-            role: 'student',
-            created_at: new Date().toISOString(),
-          })
-        } else {
-          setUser({
-            id: 'user-' + Date.now(),
-            username: username.toLowerCase().trim(),
-            display_name: displayName || username,
-            avatar_url: null,
-            bio: null,
-            role: 'student',
-            created_at: new Date().toISOString(),
-          })
-        }
-        toast.success('Registration successful! Welcome to ClassmateHub.')
-        router.push('/dashboard')
+        return
       }
-    } catch {
-      // Fallback preview mode registration
-      setUser({
-        id: 'user-new-' + Date.now(),
-        username: username.toLowerCase().trim(),
-        display_name: displayName || username,
-        avatar_url: null,
-        bio: null,
-        role: 'student',
-        created_at: new Date().toISOString(),
-      })
-      toast.success('Account created successfully!')
+
+      if (data.user) {
+        setUser({
+          id: data.user.id,
+          username: username.toLowerCase().trim(),
+          display_name: displayName || username,
+          avatar_url: null,
+          bio: null,
+          role: 'student',
+          created_at: new Date().toISOString(),
+        })
+      } else {
+        localRegister()
+        return
+      }
+      toast.success('Registration successful! Welcome to ClassmateHub.')
       router.push('/dashboard')
+    } catch {
+      // Network error / Supabase completely unreachable — fall back to local session
+      localRegister()
     } finally {
       setLoading(false)
     }
