@@ -13,6 +13,16 @@ import { uploadFileInGithubChunks } from '@/lib/github-upload'
 import { useAppStore } from '@/store/useAppStore'
 import type { Lab } from '@/lib/types'
 
+const ALLOWED_UPLOAD_TYPES = {
+  'application/pdf': ['.pdf'],
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+  'image/png': ['.png'],
+  'image/jpeg': ['.jpg', '.jpeg'],
+  'text/plain': ['.c', '.py', '.java', '.js', '.ts'],
+  'application/zip': ['.zip'],
+  'application/x-rar-compressed': ['.rar'],
+}
+
 function getFileType(fileName: string) {
   const extension = fileName.split('.').pop()?.toLowerCase()
   if (extension === 'pdf') return 'pdf'
@@ -47,7 +57,7 @@ export default function MaterialUploadPage() {
     setFile(selected)
     setTitle((current) => current || selected.name.replace(/\.[^/.]+$/, '').replace(/_/g, ' '))
   }, [])
-  const dropzone = useDropzone({ onDrop, maxFiles: 1, maxSize: MAX_FILE_SIZE_BYTES })
+  const dropzone = useDropzone({ onDrop, maxFiles: 1, maxSize: MAX_FILE_SIZE_BYTES, accept: ALLOWED_UPLOAD_TYPES })
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault()

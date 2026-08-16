@@ -419,6 +419,8 @@ CREATE POLICY "Owner or admin delete poll" ON polls FOR DELETE
 -- POLL VOTES
 CREATE POLICY "Vote insert" ON poll_votes FOR INSERT
   WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Own poll vote delete" ON poll_votes FOR DELETE
+  USING (auth.uid() = user_id);
 CREATE POLICY "Vote read" ON poll_votes FOR SELECT USING (TRUE);
 
 -- EVENTS

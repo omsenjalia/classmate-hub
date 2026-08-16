@@ -13,6 +13,7 @@ CREATE POLICY "Create reports" ON moderation_reports FOR INSERT WITH CHECK (auth
 CREATE POLICY "Read own or admin reports" ON moderation_reports FOR SELECT USING (auth.uid() = reporter_id OR is_admin());
 CREATE POLICY "Admin review reports" ON moderation_reports FOR UPDATE USING (is_admin()) WITH CHECK (is_admin());
 CREATE POLICY "Admin audit logs" ON audit_logs FOR SELECT USING (is_admin());
+CREATE POLICY "Own poll vote delete" ON poll_votes FOR DELETE USING (auth.uid() = user_id);
 
 CREATE OR REPLACE FUNCTION public.notify_class_members()
 RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$

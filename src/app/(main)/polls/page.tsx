@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useAppStore } from '@/store/useAppStore'
 import { fetchLivePolls } from '@/lib/supabase-data'
+import { createClient } from '@/lib/supabase/client'
 import { Poll } from '@/lib/types'
 import { formatDate } from '@/lib/utils'
 import {
@@ -29,11 +30,22 @@ export default function PollsPage() {
 
   useEffect(() => {
     async function loadData() {
-      const data = await fetchLivePolls()
-      setPolls(data)
+      const [data, { data: votes }] = await Promise.all([
+        fetchLivePolls(),
+        createClient().from('poll_votes').select('poll_id, user_id, selected_options'),
+      ])
+      const pollVotes = votes || []
+      setPolls(data.map((poll) => {
+        const counts: Record<number, number> = {}
+        const ownVote = pollVotes.find((vote) => vote.poll_id === poll.id && vote.user_id === user?.id)
+        pollVotes.filter((vote) => vote.poll_id === poll.id).forEach((vote) => {
+          vote.selected_options.forEach((option: number) => { counts[option] = (counts[option] || 0) + 1 })
+        })
+        return { ...poll, votes_count: counts, total_votes: pollVotes.filter((vote) => vote.poll_id === poll.id).length, user_voted_options: ownVote?.selected_options || [] }
+      }))
     }
     loadData()
-  }, [])
+  }, [user?.id])
 
   // Create Poll Form State
   const [question, setQuestion] = useState('')
@@ -63,40 +75,46 @@ export default function PollsPage() {
     setOptions(updated)
   }
 
-  const handleCreatePoll = (e: React.FormEvent) => {
+  const handleCreatePoll = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!user) return toast.error('You must be signed in to create a poll')
     const validOptions = options.map((o) => o.trim()).filter(Boolean)
     if (!question.trim() || validOptions.length < 2) {
       toast.error('Please enter a question and at least 2 options')
       return
     }
 
-    const newPoll: Poll = {
-      id: 'poll-' + Date.now(),
-      question: question.trim(),
-      options: validOptions,
-      allow_multiple: allowMultiple,
-      is_anonymous: isAnonymous,
-      created_by: user?.id || 'user-demo-admin-1',
+    const { data, error } = await createClient().from('polls').insert({
+      question: question.trim(), options: validOptions, allow_multiple: allowMultiple,
+      is_anonymous: isAnonymous, created_by: user.id,
       expires_at: new Date(Date.now() + 3600000 * 72).toISOString(),
-      created_at: new Date().toISOString(),
-      profiles: user,
-      votes_count: {},
-      total_votes: 0,
-      user_voted_options: [],
-    }
-
-    setPolls([newPoll, ...polls])
+    }).select('*, profiles(*)').single()
+    if (error || !data) return toast.error(error?.message || 'Could not create poll')
+    setPolls((current) => [{ ...(data as Poll), votes_count: {}, total_votes: 0, user_voted_options: [] }, ...current])
     setQuestion('')
     setOptions(['', ''])
     setShowCreateModal(false)
     toast.success('Poll created successfully!')
   }
 
-  const handleVote = (pollId: string, optionIdx: number) => {
+  const handleVote = async (pollId: string, optionIdx: number) => {
     if (!user) {
       toast.error('You must be signed in to vote!')
       return
+    }
+
+    const poll = polls.find((item) => item.id === pollId)
+    if (!poll) return
+    const previousOptions = poll.user_voted_options || []
+    const selectedOptions = poll.allow_multiple
+      ? previousOptions.includes(optionIdx) ? previousOptions.filter((index) => index !== optionIdx) : [...previousOptions, optionIdx]
+      : [optionIdx]
+    const supabase = createClient()
+    const { error: deleteError } = await supabase.from('poll_votes').delete().eq('poll_id', pollId).eq('user_id', user.id)
+    if (deleteError) return toast.error(deleteError.message)
+    if (selectedOptions.length) {
+      const { error } = await supabase.from('poll_votes').insert({ poll_id: pollId, user_id: user.id, selected_options: selectedOptions })
+      if (error) return toast.error(error.message)
     }
 
     setPolls((prev) =>
@@ -142,12 +160,14 @@ export default function PollsPage() {
       })
     )
 
-    toast.success('Vote submitted!')
+    toast.success(selectedOptions.length ? 'Vote submitted!' : 'Vote removed')
   }
 
-  const handleDeletePoll = (pollId: string) => {
+  const handleDeletePoll = async (pollId: string) => {
     if (!confirm('Delete this poll?')) return
-    setPolls(polls.filter((p) => p.id !== pollId))
+    const { error } = await createClient().from('polls').delete().eq('id', pollId)
+    if (error) return toast.error(error.message)
+    setPolls((current) => current.filter((poll) => poll.id !== pollId))
     toast.success('Poll deleted')
   }
 

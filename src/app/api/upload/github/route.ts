@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { uploadGithubChunk } from '@/lib/github-storage'
 import { createClient } from '@/lib/supabase/server'
 import { ALLOWED_FILE_EXTENSIONS, MAX_FILE_SIZE_BYTES } from '@/lib/constants'
+import { GITHUB_UPLOAD_CHUNK_SIZE } from '@/lib/github-upload'
 
 export const runtime = 'nodejs'
 
@@ -28,6 +29,13 @@ export async function POST(request: Request) {
     }
     if (!Number.isInteger(chunkIndex) || !Number.isInteger(totalChunks) || chunkIndex < 0 || totalChunks < 1 || chunkIndex >= totalChunks) {
       return NextResponse.json({ error: 'Invalid chunk metadata' }, { status: 400 })
+    }
+    const expectedTotalChunks = Math.ceil(fileSize / GITHUB_UPLOAD_CHUNK_SIZE)
+    const expectedChunkSize = chunkIndex === totalChunks - 1
+      ? fileSize - chunkIndex * GITHUB_UPLOAD_CHUNK_SIZE
+      : GITHUB_UPLOAD_CHUNK_SIZE
+    if (totalChunks !== expectedTotalChunks || file.size !== expectedChunkSize) {
+      return NextResponse.json({ error: 'Invalid chunk size' }, { status: 400 })
     }
 
     const supabase = await createClient()
