@@ -107,7 +107,7 @@ function SortableSubjectItem({
 }
 
 export default function AdminSubjectsPage() {
-  const { subjects, setSubjects, channels, setChannels } = useAppStore()
+  const { subjects, setSubjects } = useAppStore()
   const [labs, setLabs] = useState<Lab[]>([])
 
   // Subject Form State
@@ -156,21 +156,10 @@ export default function AdminSubjectsPage() {
       created_at: new Date().toISOString(),
     }
 
-    // Auto-create chat channel as required by DB trigger spec
-    const newChan = {
-      id: `chan-${code.toLowerCase()}`,
-      name: code.toLowerCase(),
-      description: `${name} subject discussion`,
-      subject_id: newSub.id,
-      is_default: false,
-      created_at: new Date().toISOString(),
-    }
-
     setSubjects([...subjects, newSub])
-    setChannels([...channels, newChan])
     setName('')
     setCode('')
-    toast.success(`Subject "${newSub.code}" & auto-created chat channel added!`)
+    toast.success(`Subject "${newSub.code}" added!`)
   }
 
   const handleAddLab = (e: React.FormEvent) => {
@@ -251,7 +240,7 @@ export default function AdminSubjectsPage() {
               type="submit"
               className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium px-4 py-2 rounded-lg flex items-center gap-2 transition-all shadow-md shadow-indigo-500/20 cursor-pointer"
             >
-              <Plus className="w-4 h-4" /> Save Subject &amp; Auto-Create Channel
+              <Plus className="w-4 h-4" /> Save Subject
             </button>
           </div>
         </form>

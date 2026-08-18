@@ -19,7 +19,7 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: 'ClassmateHub — BVM IT Department',
   description:
-    'Class platform for course materials, lab guides, real-time chat, deadlines, and polls for BVM Engineering IT students.',
+    'Class platform for course materials, lab guides, deadlines, and polls for BVM Engineering IT students.',
 }
 
 export default function RootLayout({

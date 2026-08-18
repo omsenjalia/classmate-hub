@@ -63,10 +63,17 @@ export default function RegisterPage() {
 
     try {
       const supabase = createClient()
+      // Use NEXT_PUBLIC_SITE_URL (set in Vercel env vars) so verification
+      // emails always link back to the production URL instead of localhost.
+      const siteUrl =
+        process.env.NEXT_PUBLIC_SITE_URL ||
+        (typeof window !== 'undefined' ? window.location.origin : '')
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
+          emailRedirectTo: `${siteUrl}/dashboard`,
           data: {
             username: username.toLowerCase().trim(),
             display_name: displayName || username,

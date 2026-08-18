@@ -8,9 +8,7 @@ import { formatBytes } from '@/lib/utils'
 import {
   Users,
   FolderKanban,
-  MessageSquare,
   HardDrive,
-  TrendingUp,
   ArrowUpRight,
 } from 'lucide-react'
 import {
@@ -35,17 +33,12 @@ const WEEKLY_UPLOADS_DATA = [
 export default function AdminDashboardPage() {
   const [materials, setMaterials] = useState<Material[]>([])
   const [memberCount, setMemberCount] = useState(0)
-  const [messageCount, setMessageCount] = useState(0)
 
   useEffect(() => {
     fetchLiveMaterials().then(setMaterials)
     const supabase = createClient()
-    Promise.all([
-      supabase.from('profiles').select('*', { count: 'exact', head: true }),
-      supabase.from('messages').select('*', { count: 'exact', head: true }),
-    ]).then(([profiles, messages]) => {
-      setMemberCount(profiles.count || 0)
-      setMessageCount(messages.count || 0)
+    supabase.from('profiles').select('*', { count: 'exact', head: true }).then(({ count }) => {
+      setMemberCount(count || 0)
     })
   }, [])
 
@@ -62,7 +55,7 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <div className="bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-2xl p-5 space-y-2 shadow-sm">
           <div className="flex items-center justify-between text-gray-500 dark:text-gray-400">
             <span className="text-xs font-mono uppercase">Total Class Students</span>
@@ -86,19 +79,6 @@ export default function AdminDashboardPage() {
           <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalMaterials}</p>
           <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono flex items-center gap-1">
             <ArrowUpRight className="w-3 h-3" /> 100% indexed
-          </span>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-2xl p-5 space-y-2 shadow-sm">
-          <div className="flex items-center justify-between text-gray-500 dark:text-gray-400">
-            <span className="text-xs font-mono uppercase">Chat Messages</span>
-            <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-              <MessageSquare className="w-4 h-4" />
-            </div>
-          </div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{messageCount}</p>
-          <span className="text-[10px] text-amber-600 dark:text-amber-400 font-mono flex items-center gap-1">
-            <TrendingUp className="w-3 h-3" /> Live from Supabase
           </span>
         </div>
 

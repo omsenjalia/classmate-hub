@@ -110,12 +110,7 @@ export default function DashboardPage() {
             >
               Browse Materials <ArrowRight className="w-4 h-4" />
             </Link>
-            <Link
-              href="/chat/chan-gen"
-              className="bg-white/15 hover:bg-white/25 border border-white/20 text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-colors"
-            >
-              Open Class Chat
-            </Link>
+
           </div>
         </div>
       </div>
