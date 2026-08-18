@@ -5,7 +5,6 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard,
   FolderKanban,
-  MessageSquare,
   Vote,
   Calendar,
 } from 'lucide-react'
@@ -14,7 +13,6 @@ import { cn } from '@/lib/utils'
 const navItems = [
   { label: 'Home', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Materials', href: '/materials', icon: FolderKanban },
-  { label: 'Chat', href: '/chat/general', icon: MessageSquare },
   { label: 'Polls', href: '/polls', icon: Vote },
   { label: 'Events', href: '/events', icon: Calendar },
 ]

@@ -6,31 +6,26 @@ import { useAppStore } from '@/store/useAppStore'
 import {
   LayoutDashboard,
   FolderKanban,
-  MessageSquare,
   Vote,
   Calendar,
   Clock,
   ShieldCheck,
-  Hash,
   Upload,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export default function Sidebar({ className }: { className?: string }) {
   const pathname = usePathname()
-  const { user, channels, subjects, setSidebarOpen } = useAppStore()
+  const { user, setSidebarOpen } = useAppStore()
 
   const mainNav = [
     { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { label: 'Materials', href: '/materials', icon: FolderKanban },
-    { label: 'Chat', href: '/chat/general', icon: MessageSquare },
     { label: 'Polls', href: '/polls', icon: Vote },
     { label: 'Events', href: '/events', icon: Calendar },
     { label: 'Deadlines', href: '/deadlines', icon: Clock },
   ]
 
-  const globalChannels = channels.filter((c) => !c.subject_id)
-  const subjectChannels = channels.filter((c) => c.subject_id !== null)
   const isAdmin = user?.role === 'admin'
 
   return (
@@ -119,69 +114,6 @@ export default function Sidebar({ className }: { className?: string }) {
               <ShieldCheck className="w-[18px] h-[18px] text-amber-600 dark:text-amber-400" />
               <span>Admin Panel</span>
             </Link>
-          </div>
-        )}
-
-        {/* Global Channels */}
-        {globalChannels.length > 0 && (
-          <div className="space-y-0.5">
-            <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
-              Channels
-            </p>
-            {globalChannels.map((channel) => {
-              const channelPath = `/chat/${channel.id}`
-              const isActive = pathname === channelPath
-              return (
-                <Link
-                  key={channel.id}
-                  href={channelPath}
-                  onClick={() => setSidebarOpen(false)}
-                  className={cn(
-                    'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors',
-                    isActive
-                      ? 'bg-gray-100 dark:bg-white/5 text-gray-900 dark:text-white font-semibold'
-                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5'
-                  )}
-                >
-                  <Hash className="w-4 h-4 text-gray-400 dark:text-gray-500" />
-                  <span>{channel.name}</span>
-                </Link>
-              )
-            })}
-          </div>
-        )}
-
-        {/* Subject Channels */}
-        {subjects.length > 0 && (
-          <div className="space-y-0.5">
-            <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
-              Subjects
-            </p>
-            {subjects.map((sub) => {
-              const channel = subjectChannels.find((c) => c.subject_id === sub.id) || {
-                id: `chan-${sub.code.toLowerCase()}`,
-                name: sub.code.toLowerCase(),
-              }
-              const channelPath = `/chat/${channel.id}`
-              const isActive = pathname === channelPath
-
-              return (
-                <Link
-                  key={sub.id}
-                  href={channelPath}
-                  onClick={() => setSidebarOpen(false)}
-                  className={cn(
-                    'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors',
-                    isActive
-                      ? 'bg-gray-100 dark:bg-white/5 text-gray-900 dark:text-white font-semibold'
-                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5'
-                  )}
-                >
-                  <Hash className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
-                  <span className="truncate">{sub.code}</span>
-                </Link>
-              )
-            })}
           </div>
         )}
       </div>

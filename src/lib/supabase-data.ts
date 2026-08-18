@@ -6,7 +6,6 @@ import {
   Poll,
   Deadline,
   Subject,
-  Channel,
   Lab,
 } from '@/lib/types'
 
@@ -118,23 +117,6 @@ export async function fetchLiveSubjects(): Promise<Subject[]> {
 
     if (error || !data) return []
     return data as Subject[]
-  } catch {
-    return []
-  }
-}
-
-export async function fetchLiveChannels(): Promise<Channel[]> {
-  if (!isSupabaseConfigured()) return []
-
-  try {
-    const supabase = createClient()
-    const { data, error } = await supabase
-      .from('channels')
-      .select('*')
-      .order('created_at', { ascending: true })
-
-    if (error || !data) return []
-    return data as Channel[]
   } catch {
     return []
   }

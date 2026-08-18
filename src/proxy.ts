@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-const AUTH_REQUIRED_PREFIXES = ['/materials/upload', '/chat', '/polls/create', '/events/create', '/deadlines/create', '/admin']
+const AUTH_REQUIRED_PREFIXES = ['/materials/upload', '/polls/create', '/events/create', '/deadlines/create', '/admin']
 const AUTH_PAGES = ['/login', '/register']
 
 export async function proxy(request: NextRequest) {

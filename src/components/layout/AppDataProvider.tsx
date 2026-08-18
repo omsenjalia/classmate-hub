@@ -1,28 +1,26 @@
 'use client'
 
 import { useEffect } from 'react'
-import { fetchLiveChannels, fetchLiveSubjects } from '@/lib/supabase-data'
+import { fetchLiveSubjects } from '@/lib/supabase-data'
 import { useAppStore } from '@/store/useAppStore'
 
 /** Loads shared navigation data once for every page in the authenticated shell. */
 export default function AppDataProvider({ children }: { children: React.ReactNode }) {
   const setSubjects = useAppStore((state) => state.setSubjects)
-  const setChannels = useAppStore((state) => state.setChannels)
 
   useEffect(() => {
     let cancelled = false
 
-    Promise.all([fetchLiveSubjects(), fetchLiveChannels()]).then(([subjects, channels]) => {
+    fetchLiveSubjects().then((subjects) => {
       if (!cancelled) {
         setSubjects(subjects)
-        setChannels(channels)
       }
     })
 
     return () => {
       cancelled = true
     }
-  }, [setChannels, setSubjects])
+  }, [setSubjects])
 
   return children
 }

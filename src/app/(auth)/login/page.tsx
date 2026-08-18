@@ -110,7 +110,7 @@ export default function LoginPage() {
     <div className="bg-white dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 sm:p-8 shadow-xl">
       <div className="mb-6">
         <h2 className="text-xl font-bold text-gray-900 dark:text-white">Sign In to ClassmateHub</h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Access study materials, channels, and class polls.</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Access study materials, deadlines, and class polls.</p>
       </div>
 
       <form onSubmit={handleLogin} className="space-y-4">
