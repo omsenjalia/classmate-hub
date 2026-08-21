@@ -16,6 +16,7 @@ const jetbrainsMono = JetBrains_Mono({
   display: 'swap',
 })
 
+
 export const metadata: Metadata = {
   title: 'ClassmateHub — BVM IT Department',
   description:

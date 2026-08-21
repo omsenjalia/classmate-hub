@@ -37,19 +37,19 @@
 
   .dark {
     /* ─── Dark Theme Tokens ─── */
-    --color-bg: 225 20% 7%;
-    --color-surface-1: 225 16% 11%;
-    --color-surface-2: 225 15% 15%;
-    --color-surface-3: 225 14% 19%;
-    --color-border: 228 18% 22%;
-    --color-border-subtle: 228 16% 18%;
-    --color-text: 225 20% 93%;
-    --color-text-secondary: 225 12% 62%;
-    --color-text-muted: 225 10% 46%;
-    --color-accent: 228 76% 59%;
-    --color-accent-hover: 228 80% 52%;
-    --color-accent-subtle: 228 50% 16%;
-    --color-accent-muted: 228 40% 30%;
+    --color-bg: 24 12% 6%;
+    --color-surface-1: 24 10% 9%;
+    --color-surface-2: 24 9% 13%;
+    --color-surface-3: 24 8% 17%;
+    --color-border: 24 8% 24%;
+    --color-border-subtle: 24 8% 18%;
+    --color-text: 38 35% 93%;
+    --color-text-secondary: 30 12% 66%;
+    --color-text-muted: 28 8% 48%;
+    --color-accent: 12 86% 55%;
+    --color-accent-hover: 12 90% 62%;
+    --color-accent-subtle: 12 44% 16%;
+    --color-accent-muted: 12 35% 30%;
 
     --color-success: 152 60% 45%;
     --color-warning: 38 92% 55%;
@@ -72,8 +72,12 @@
 
   h1, h2, h3 {
     font-family: var(--font-dm-sans), system-ui, sans-serif;
-    font-weight: 700;
-    letter-spacing: -0.01em;
+    font-weight: 800;
+    letter-spacing: -0.035em;
+  }
+
+  html {
+    background: hsl(var(--color-bg));
   }
 
   code, pre, .font-mono {
@@ -164,6 +168,53 @@
 
 .animate-slide-in-left {
   animation: slide-in-left 0.2s ease-out;
+}
+
+/* ─── Route-wide editorial surface overrides ─── */
+.dark .bg-gray-800\/60,
+.dark .bg-gray-900\/50 { background-color: hsl(var(--color-surface-1) / 0.88); }
+.dark .border-gray-700,
+.dark .border-gray-600 { border-color: hsl(var(--color-border)); }
+.dark .text-white { color: hsl(var(--color-text)); }
+.dark .text-gray-400 { color: hsl(var(--color-text-secondary)); }
+.dark .text-indigo-400,
+.dark .text-indigo-600 { color: hsl(var(--color-accent)); }
+
+/* ─── Editorial surfaces and motion ─── */
+.editorial-grid {
+  background-image: linear-gradient(hsl(var(--color-border) / 0.16) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--color-border) / 0.16) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.editorial-noise::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.045;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
+  mix-blend-mode: screen;
+}
+
+.editorial-card {
+  border: 1px solid hsl(var(--color-border));
+  background: hsl(var(--color-surface-1) / 0.86);
+  transition: transform 240ms ease, border-color 240ms ease, background-color 240ms ease;
+}
+
+.editorial-card:hover {
+  transform: translateY(-3px);
+  border-color: hsl(var(--color-accent) / 0.6);
+  background: hsl(var(--color-surface-2));
+}
+
+.stagger-in > * { animation: fade-in 420ms ease-out both; }
+.stagger-in > *:nth-child(2) { animation-delay: 70ms; }
+.stagger-in > *:nth-child(3) { animation-delay: 140ms; }
+.stagger-in > *:nth-child(4) { animation-delay: 210ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 1ms !important; transition-duration: 1ms !important; scroll-behavior: auto !important; }
 }
 
 /* ─── Selection ─── */

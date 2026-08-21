@@ -76,7 +76,7 @@ export default function Topbar() {
   }
 
   return (
-    <header className="min-h-16 bg-white/80 dark:bg-[hsl(225,16%,11%)]/80 backdrop-blur-md border-b border-gray-200 dark:border-[hsl(228,18%,22%)] px-3 sm:px-6 py-2 flex items-center justify-between gap-2 sticky top-0 z-30">
+    <header className="min-h-16 bg-page/90 backdrop-blur-md border-b border-default px-3 sm:px-6 py-2 flex items-center justify-between gap-2 sticky top-0 z-30">
       {/* Left: Toggle + Search */}
       <div className="flex items-center gap-3 flex-1 max-w-xl">
         <button
@@ -105,7 +105,7 @@ export default function Topbar() {
         {user && (
           <Link
             href="/materials/upload"
-            className="hidden sm:flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-3.5 py-2 rounded-lg transition-colors"
+            className="hidden sm:flex items-center gap-2 bg-accent hover:bg-[hsl(var(--color-accent-hover))] text-white text-sm font-semibold px-3.5 py-2 rounded-lg transition-colors"
           >
             <Upload className="w-4 h-4" /> Upload
           </Link>
