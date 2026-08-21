@@ -18,7 +18,7 @@ export default function MobileNav() {
       />
 
       {/* Drawer */}
-      <div className="relative z-10 w-[280px] h-full shadow-2xl animate-slide-in-left">
+      <div className="relative z-10 w-[min(86vw,320px)] h-full shadow-2xl animate-slide-in-left">
         <button
           onClick={() => setSidebarOpen(false)}
           className="absolute top-4 right-3 text-gray-400 hover:text-gray-900 dark:hover:text-white p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 z-20 transition-colors"

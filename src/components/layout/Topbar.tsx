@@ -76,7 +76,7 @@ export default function Topbar() {
   }
 
   return (
-    <header className="h-16 bg-white/80 dark:bg-[hsl(225,16%,11%)]/80 backdrop-blur-md border-b border-gray-200 dark:border-[hsl(228,18%,22%)] px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30">
+    <header className="min-h-16 bg-white/80 dark:bg-[hsl(225,16%,11%)]/80 backdrop-blur-md border-b border-gray-200 dark:border-[hsl(228,18%,22%)] px-3 sm:px-6 py-2 flex items-center justify-between gap-2 sticky top-0 z-30">
       {/* Left: Toggle + Search */}
       <div className="flex items-center gap-3 flex-1 max-w-xl">
         <button
@@ -117,7 +117,7 @@ export default function Topbar() {
               <Bell className="w-[18px] h-[18px]" />
               {notifications.some((item) => !item.is_read) && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />}
             </button>
-            {notificationsOpen && <div className="absolute right-0 mt-2 w-80 max-h-96 overflow-y-auto bg-white dark:bg-[hsl(225,16%,11%)] border border-gray-200 dark:border-[hsl(228,18%,22%)] rounded-xl shadow-lg p-2 z-50">
+            {notificationsOpen && <div className="absolute right-0 mt-2 w-[min(20rem,calc(100vw-1.5rem))] max-h-96 overflow-y-auto bg-white dark:bg-[hsl(225,16%,11%)] border border-gray-200 dark:border-[hsl(228,18%,22%)] rounded-xl shadow-lg p-2 z-50">
               <p className="px-2 py-1 text-xs font-semibold text-muted">Notifications</p>
               {notifications.length ? notifications.map((item) => <Link key={item.id} href={item.href || '#'} onClick={() => setNotificationsOpen(false)} className="block p-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5">
                 <p className="text-sm font-medium text-primary">{item.title}</p><p className="text-xs text-muted mt-0.5">{item.body}</p>
