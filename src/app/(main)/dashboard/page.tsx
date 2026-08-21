@@ -88,11 +88,9 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="stagger-in space-y-8 animate-fade-in">
       {/* Welcome Hero Banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-600 via-indigo-700 to-indigo-800 dark:from-indigo-900/80 dark:via-indigo-950/60 dark:to-gray-900/80 border border-indigo-500/30 dark:border-indigo-500/20 p-6 sm:p-8 shadow-xl">
-        <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-white/10 dark:bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -left-16 -top-16 w-48 h-48 bg-indigo-400/15 rounded-full blur-3xl pointer-events-none" />
+      <div className="editorial-noise relative overflow-hidden rounded-[2rem] bg-[hsl(var(--color-surface-1))] border border-[hsl(var(--color-accent)/.45)] p-6 sm:p-10 shadow-elevated">
         <div className="relative z-10 max-w-2xl">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/15 dark:bg-indigo-500/15 border border-white/20 dark:border-indigo-400/30 text-white/90 text-xs font-medium mb-3">
             <BookOpen className="w-3.5 h-3.5" /> BVM IT Class Hub • Semester 1
