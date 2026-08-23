@@ -4,53 +4,47 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import {
   fetchLiveAnnouncements,
-  fetchLiveMaterials,
   fetchLiveEvents,
   fetchLivePolls,
 } from '@/lib/supabase-data'
-import { Announcement, Material, EventItem, Poll } from '@/lib/types'
+import { Announcement, EventItem, Poll } from '@/lib/types'
 import { SYLLABUS_PDFS } from '@/lib/constants'
-import { formatDate, formatRelativeTime, formatBytes, getSubjectColor, getFileTypeInfo } from '@/lib/utils'
+import { formatDate, formatRelativeTime } from '@/lib/utils'
+import { useAppStore } from '@/store/useAppStore'
 import {
   Megaphone,
-  FileText,
-  Video,
-  Code,
-  Archive,
-  Download,
   Calendar,
   Vote,
   ExternalLink,
   ArrowRight,
   BookOpen,
+  FileText,
   CheckCircle2,
   Clock,
   Pin,
-  Inbox,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function DashboardPage() {
+  const { subjects } = useAppStore()
   const [announcements, setAnnouncements] = useState<Announcement[]>([])
-  const [materials, setMaterials] = useState<Material[]>([])
   const [events, setEvents] = useState<EventItem[]>([])
   const [polls, setPolls] = useState<Poll[]>([])
 
   useEffect(() => {
     async function loadData() {
-      const [annData, matData, evtData, pollData] = await Promise.all([
+      const [annData, evtData, pollData] = await Promise.all([
         fetchLiveAnnouncements(),
-        fetchLiveMaterials(),
         fetchLiveEvents(),
         fetchLivePolls(),
       ])
       setAnnouncements(annData)
-      setMaterials(matData)
       setEvents(evtData)
       setPolls(pollData)
     }
     loadData()
   }, [])
+
 
   const handleQuickVote = (pollId: string, optionIndex: number) => {
     setPolls((prev) =>
@@ -69,22 +63,6 @@ export default function DashboardPage() {
       })
     )
     toast.success('Vote recorded!')
-  }
-
-  const getFileIcon = (fileType?: string | null) => {
-    const info = getFileTypeInfo(fileType)
-    switch (fileType) {
-      case 'pdf':
-        return <FileText className={`w-5 h-5 ${info.colorClass}`} />
-      case 'code':
-        return <Code className={`w-5 h-5 ${info.colorClass}`} />
-      case 'video':
-        return <Video className={`w-5 h-5 ${info.colorClass}`} />
-      case 'zip':
-        return <Archive className={`w-5 h-5 ${info.colorClass}`} />
-      default:
-        return <FileText className={`w-5 h-5 ${info.colorClass}`} />
-    }
   }
 
   return (
@@ -147,75 +125,33 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left 2 Columns: Materials Feed & Active Polls */}
         <div className="lg:col-span-2 space-y-8">
-          {/* Recent Materials Feed */}
+          {/* Subject Categories */}
           <section className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <BookOpen className="w-5 h-5 text-indigo-600 dark:text-indigo-400" /> Recent Course Materials
+                <BookOpen className="w-5 h-5 text-indigo-600 dark:text-indigo-400" /> Browse by Subject
               </h2>
               <Link href="/materials" className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 font-medium">
-                View All ({materials.length}) <ArrowRight className="w-3.5 h-3.5" />
+                All Materials <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
-
-            {materials.length === 0 ? (
-              <div className="bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl p-10 text-center space-y-3">
-                <Inbox className="w-10 h-10 text-gray-400 dark:text-gray-500 mx-auto" />
-                <h3 className="text-base font-bold text-gray-900 dark:text-white">No materials yet</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Course materials will appear here once uploaded.</p>
-                <Link href="/materials" className="inline-flex items-center gap-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline">
-                  Go to Materials <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {materials.slice(0, 5).map((item) => (
-                  <div
-                    key={item.id}
-                    className="bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-500/40 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all"
-                  >
-                    <div className="flex items-start gap-3.5">
-                      <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-700/60 border border-gray-200 dark:border-gray-600 flex items-center justify-center shrink-0">
-                        {getFileIcon(item.file_type)}
-                      </div>
-                      <div className="space-y-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Link
-                            href={`/materials/${item.id}`}
-                            className="text-sm font-semibold text-gray-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors leading-tight"
-                          >
-                            {item.title}
-                          </Link>
-                          {item.subjects && (
-                            <span
-                              className={`text-[11px] font-mono px-2 py-0.5 rounded border ${getSubjectColor(
-                                item.subjects.code
-                              )}`}
-                            >
-                              {item.subjects.code}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-1">{item.description}</p>
-                        <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 font-mono">
-                          <span>{formatDate(item.created_at)}</span>
-                          {item.file_size_bytes && <span>• {formatBytes(item.file_size_bytes)}</span>}
-                          <span>• {item.download_count} downloads</span>
-                        </div>
-                      </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {subjects.slice(0, 6).map((subject) => (
+                <Link
+                  key={subject.id}
+                  href={`/materials?subject=${encodeURIComponent(subject.id)}`}
+                  className="group bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 hover:border-indigo-400 dark:hover:border-indigo-500/60 rounded-2xl p-5 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-indigo-950/10"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-xs font-mono uppercase tracking-wider text-indigo-600 dark:text-indigo-400">{subject.code}</p>
+                      <h3 className="mt-1 text-base font-bold text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{subject.name}</h3>
                     </div>
-
-                    <Link
-                      href={`/materials/${item.id}`}
-                      className="self-end sm:self-center shrink-0 bg-gray-100 dark:bg-gray-700 hover:bg-indigo-600 hover:text-white text-gray-600 dark:text-gray-300 p-2.5 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-indigo-600 transition-all"
-                      title="View / Download"
-                    >
-                      <Download className="w-4 h-4" />
-                    </Link>
+                    <ArrowRight className="w-4 h-4 mt-1 text-gray-400 group-hover:text-indigo-500 group-hover:translate-x-1 transition-all" />
                   </div>
-                ))}
-              </div>
-            )}
+                </Link>
+              ))}
+            </div>
           </section>
 
           {/* Active Polls Widget */}
