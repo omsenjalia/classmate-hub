@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { DM_Sans, JetBrains_Mono } from 'next/font/google'
 import { Toaster } from 'react-hot-toast'
 import { Analytics } from '@vercel/analytics/next'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 import './globals.css'
 import ServiceWorkerRegistration from '@/components/layout/ServiceWorkerRegistration'
 
@@ -71,6 +72,7 @@ export default function RootLayout({
         <ServiceWorkerRegistration />
         {children}
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   )
