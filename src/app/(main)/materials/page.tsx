@@ -28,6 +28,7 @@ import {
 function MaterialsContent() {
   const searchParams = useSearchParams()
   const initialSearch = searchParams.get('search') || ''
+  const initialSubject = searchParams.get('subject') || ''
 
   const { subjects, user } = useAppStore()
   const [materials, setMaterials] = useState<Material[]>([])
@@ -48,7 +49,7 @@ function MaterialsContent() {
 
   // Filters state
   const [search, setSearch] = useState(initialSearch)
-  const [selectedSubject, setSelectedSubject] = useState<string>('')
+  const [selectedSubject, setSelectedSubject] = useState<string>(initialSubject)
   const [selectedLab, setSelectedLab] = useState<string>('')
   const [selectedFileType, setSelectedFileType] = useState<string>('')
   const [sortBy, setSortBy] = useState<'newest' | 'downloads' | 'admin'>('newest')
