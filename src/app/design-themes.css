@@ -1,0 +1,717 @@
+/* ═══════════════════════════════════════════════════════════════
+   DESIGN PREVIEW THEMES — generated from designs/1.md … designs/7.md
+   Each block re-maps the app token layer AND the raw Tailwind v4
+   palette variables, so the whole app wears the design with zero
+   component rewrites. Unlayered on purpose: beats @layer base.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ───────────────────────────────────────────────────────────────
+   01 · Vercel-Inspired (designs/1.md)
+   near-white canvas · ink #171717 · link blue #0070f3 · Geist · pill CTAs
+   ─────────────────────────────────────────────────────────────── */
+[data-design='vercel'] {
+  --app-font-sans: var(--font-geist), Inter, system-ui, sans-serif;
+  --heading-weight: 600;
+  --heading-tracking: -0.045em;
+
+  /* app tokens (light) */
+  --color-bg: 0 0% 98%;
+  --color-surface-1: 0 0% 100%;
+  --color-surface-2: 0 0% 96%;
+  --color-surface-3: 0 0% 92%;
+  --color-border-subtle: 0 0% 92%;
+  --color-border: 0 0% 88%;
+  --color-text: 0 0% 9%;
+  --color-text-secondary: 0 0% 30%;
+  --color-text-muted: 0 0% 53%;
+  --color-accent: 212 91% 48%; /* #0070f3 link blue */
+  --color-accent-hover: 211 93% 42%;
+  --color-accent-subtle: 214 100% 91%;
+  --color-accent-muted: 213 90% 76%;
+  --color-success: 212 91% 48%;
+  --color-warning: 38 91% 55%; /* #f5a623 */
+  --color-danger: 0 100% 47%; /* #ee0000 */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --shadow-sm: 0 1px 1px rgb(0 0 0 / 0.02);
+  --shadow-md: 0 2px 2px rgb(0 0 0 / 0.04);
+  --shadow-lg: 0 8px 24px rgb(0 0 0 / 0.06);
+  --shadow-xl: 0 16px 48px rgb(0 0 0 / 0.08);
+
+  /* raw palette → Vercel neutrals + blue */
+  --color-gray-50: #fafafa;
+  --color-gray-100: #f5f5f5;
+  --color-gray-200: #ebebeb;
+  --color-gray-300: #d4d4d4;
+  --color-gray-400: #a1a1a1;
+  --color-gray-500: #888888;
+  --color-gray-600: #666666;
+  --color-gray-700: #4d4d4d;
+  --color-gray-800: #2b2b2b;
+  --color-gray-900: #171717;
+  --color-gray-950: #0a0a0a;
+  /* solid CTA shade becomes ink black — the Vercel button signature */
+  --color-indigo-950: #0761d1;
+  --color-indigo-700: #171717;
+  --color-indigo-600: #171717;
+  --color-indigo-500: #0070f3;
+  --color-indigo-400: #4a90f7;
+  --color-indigo-300: #85b6fb;
+  --color-indigo-200: #c2defe;
+  --color-indigo-100: #d3e5ff;
+  --color-indigo-50: #eff6ff;
+}
+
+[data-design='vercel'].dark {
+  --color-bg: 0 0% 4%; /* #0a0a0a */
+  --color-surface-1: 0 0% 6%;
+  --color-surface-2: 0 0% 9%;
+  --color-surface-3: 0 0% 12%;
+  --color-border-subtle: 0 0% 15%;
+  --color-border: 0 0% 20%;
+  --color-text: 0 0% 93%; /* #ededed */
+  --color-text-secondary: 0 0% 63%;
+  --color-text-muted: 0 0% 44%;
+  --color-accent: 212 100% 60%; /* #3291ff */
+  --color-accent-hover: 214 100% 69%;
+  --color-accent-subtle: 217 61% 19%;
+  --color-accent-muted: 215 50% 33%;
+  --color-success: 212 100% 60%;
+  --color-danger: 0 100% 62%;
+  --shadow-sm: 0 1px 1px rgb(0 0 0 / 0.3);
+  --shadow-md: 0 2px 2px rgb(0 0 0 / 0.35);
+  --shadow-lg: 0 8px 24px rgb(0 0 0 / 0.4);
+  --shadow-xl: 0 16px 48px rgb(0 0 0 / 0.45);
+
+  --color-gray-50: #171717;
+  --color-gray-100: #1c1c1c;
+  --color-gray-200: #262626;
+  --color-gray-300: #333333;
+  --color-gray-400: #707070;
+  --color-gray-500: #8f8f8f;
+  --color-gray-600: #a1a1a1;
+  --color-gray-700: #c2c2c2;
+  --color-gray-800: #e0e0e0;
+  --color-gray-900: #ededed;
+  --color-gray-950: #fafafa;
+  --color-indigo-950: #d3e5ff;
+  --color-indigo-700: #ededed; /* polarity flip: light button on dark */
+  --color-indigo-600: #ffffff;
+  --color-indigo-500: #3291ff;
+  --color-indigo-400: #62a8ff;
+  --color-indigo-300: #85b6fb;
+  --color-indigo-200: #14294d;
+  --color-indigo-100: #11254a;
+  --color-indigo-50: #0d1c38;
+}
+
+/* ───────────────────────────────────────────────────────────────
+   02 · Notion (designs/2.md)
+   white + warm surface · purple #5645d4 CTA · pastel tints · Inter
+   ─────────────────────────────────────────────────────────────── */
+[data-design='notion'] {
+  --app-font-sans: var(--font-inter), Inter, system-ui, sans-serif;
+  --heading-weight: 600;
+  --heading-tracking: -0.02em;
+
+  --color-bg: 60 9% 98%; /* #fafaf9 */
+  --color-surface-1: 0 0% 100%;
+  --color-surface-2: 30 10% 96%; /* #f6f5f4 */
+  --color-surface-3: 36 20% 91%; /* #ede9e4 */
+  --color-border-subtle: 36 20% 91%;
+  --color-border: 40 11% 89%; /* #e5e3df */
+  --color-text: 33 8% 20%; /* #37352f charcoal */
+  --color-text-secondary: 45 6% 35%; /* #5d5b54 */
+  --color-text-muted: 39 4% 46%; /* #787671 */
+  --color-accent: 248 59% 58%; /* #5645d4 */
+  --color-accent-hover: 248 54% 45%; /* pressed #4534b3 */
+  --color-accent-subtle: 254 49% 92%; /* #e6e0f5 */
+  --color-accent-muted: 254 45% 78%;
+  --color-success: 133 74% 39%; /* #1aae39 */
+  --color-warning: 25 100% 43%; /* #dd5b00 */
+  --color-danger: 0 72% 54%; /* #e03131 */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --shadow-sm: 0 1px 2px rgb(15 15 15 / 0.04);
+  --shadow-md: 0 4px 12px rgb(15 15 15 / 0.08);
+  --shadow-lg: 0 12px 32px rgb(15 15 15 / 0.1);
+  --shadow-xl: 0 16px 48px -8px rgb(15 15 15 / 0.16);
+
+  --color-gray-50: #fafaf9;
+  --color-gray-100: #f6f5f4;
+  --color-gray-200: #ede9e4;
+  --color-gray-300: #e5e3df;
+  --color-gray-400: #c8c4be;
+  --color-gray-500: #a4a097;
+  --color-gray-600: #787671;
+  --color-gray-700: #5d5b54;
+  --color-gray-800: #37352f;
+  --color-gray-900: #1a1a1a;
+  --color-gray-950: #000000;
+  --color-indigo-950: #391c57;
+  --color-indigo-700: #4534b3;
+  --color-indigo-600: #5645d4;
+  --color-indigo-500: #6a55dd;
+  --color-indigo-400: #8a6fe8;
+  --color-indigo-300: #b79ef0;
+  --color-indigo-200: #d6b6f6;
+  --color-indigo-100: #e6e0f5;
+  --color-indigo-50: #f4f1fc;
+  --color-blue-500: #0075de; /* link-blue */
+  --color-blue-400: #3391e5;
+}
+
+[data-design='notion'].dark {
+  --color-bg: 0 0% 10%; /* #191919 */
+  --color-surface-1: 0 0% 13%;
+  --color-surface-2: 0 0% 15%;
+  --color-surface-3: 0 0% 18%;
+  --color-border-subtle: 0 0% 18%;
+  --color-border: 0 0% 22%;
+  --color-text: 0 0% 83%; /* #d4d4d4 */
+  --color-text-secondary: 45 3% 60%;
+  --color-text-muted: 0 0% 44%;
+  --color-accent: 250 68% 69%; /* #8b74e8 */
+  --color-accent-hover: 250 75% 76%;
+  --color-accent-subtle: 268 51% 23%; /* #391c57 */
+  --color-accent-muted: 258 38% 42%;
+  --color-success: 133 55% 47%;
+  --color-warning: 25 95% 58%;
+  --color-danger: 0 75% 63%;
+
+  --color-gray-50: #252525;
+  --color-gray-100: #202020;
+  --color-gray-200: #2c2c2c;
+  --color-gray-300: #373737;
+  --color-gray-400: #6f6f6e;
+  --color-gray-500: #9b9a97;
+  --color-gray-600: #b3b1ac;
+  --color-gray-700: #d3d1cb;
+  --color-gray-800: #e8e6e3;
+  --color-gray-900: #f7f6f4;
+  --color-gray-950: #fffefc;
+  --color-indigo-950: #d6ccf6;
+  --color-indigo-700: #a18cf0;
+  --color-indigo-600: #8b74e8;
+  --color-indigo-500: #8b74e8;
+  --color-indigo-400: #a18cf0;
+  --color-indigo-300: #6a4fc0;
+  --color-indigo-200: #4b3080;
+  --color-indigo-100: #391c57;
+  --color-indigo-50: #2b2140;
+  --color-blue-500: #3391e5;
+}
+
+/* ───────────────────────────────────────────────────────────────
+   03 · Aime (designs/3.md)
+   cool gray #f3f3f5 · white islands · green #3dbf3d restraint · tiny radii
+   ─────────────────────────────────────────────────────────────── */
+[data-design='aime'] {
+  --app-font-sans: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Segoe UI', system-ui, sans-serif;
+  --heading-weight: 500;
+  --heading-tracking: 0.01em;
+
+  --color-bg: 240 7% 96%; /* #f3f3f5 */
+  --color-surface-1: 0 0% 100%; /* white island */
+  --color-surface-2: 218 20% 92%;
+  --color-surface-3: 216 25% 89%;
+  --color-border-subtle: 214 36% 94%; /* rgba(77,101,148,.10) over white */
+  --color-border: 216 38% 89%; /* rgba(77,101,148,.20) */
+  --color-text: 222 22% 18%; /* #232938 */
+  --color-text-secondary: 217 15% 31%; /* #444c5c */
+  --color-text-muted: 218 10% 50%; /* #747b8a */
+  --color-accent: 120 51% 41%; /* text-brand #33a033 */
+  --color-accent-hover: 120 52% 49%; /* brand #3dbf3d */
+  --color-accent-subtle: 120 43% 94%;
+  --color-accent-muted: 120 40% 75%;
+  --color-success: 120 52% 49%;
+  --color-warning: 41 100% 48%; /* #f59f00 */
+  --color-danger: 356 78% 63%; /* #eb545e */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.04);
+  --shadow-md: 0 2px 6px rgb(0 0 0 / 0.05);
+  --shadow-lg: 0 4px 12px rgb(0 0 0 / 0.08);
+  --shadow-xl: 0 15px 35px rgb(0 0 0 / 0.06);
+
+  --color-gray-50: #f5f6f7;
+  --color-gray-100: #e8eaed;
+  --color-gray-200: #dbe0e8;
+  --color-gray-300: #c7cdd9;
+  --color-gray-400: #a6adbd;
+  --color-gray-500: #747b8a;
+  --color-gray-600: #5b6475;
+  --color-gray-700: #444c5c;
+  --color-gray-800: #313747;
+  --color-gray-900: #232938;
+  --color-gray-950: #060e1f;
+  /* primary action = near-black deep ink (Aime rewrote "primary" to dark) */
+  --color-indigo-950: #060e1f;
+  --color-indigo-700: #000208;
+  --color-indigo-600: #060e1f;
+  --color-indigo-500: #313747;
+  --color-indigo-400: #5b6475;
+  --color-indigo-300: #747b8a;
+  --color-indigo-200: #a6adbd;
+  --color-indigo-100: #e8eaed;
+  --color-indigo-50: #f5f6f7;
+  --color-emerald-700: #298029;
+  --color-emerald-600: #33a033;
+  --color-emerald-500: #3dbf3d;
+  --color-emerald-400: #62d662;
+  --color-emerald-200: #c0e8c0;
+  --color-emerald-100: #dcf3dc;
+  --color-emerald-50: #eff9ef;
+  --color-red-500: #eb545e;
+  --color-red-400: #f27780;
+  --color-red-600: #d13a45;
+  --color-red-100: #fdeaeb;
+  --color-red-50: #fdf4f5;
+  --color-amber-500: #f59f00;
+  --color-amber-400: #ffb92e;
+  --color-amber-600: #d98a00;
+}
+
+[data-design='aime'].dark {
+  --color-bg: 220 57% 8%; /* #0b111f */
+  --color-surface-1: 222 36% 12%; /* #121828 */
+  --color-surface-2: 222 31% 15%;
+  --color-surface-3: 222 30% 20%;
+  --color-border-subtle: 221 29% 19%;
+  --color-border: 220 28% 25%;
+  --color-text: 210 14% 92%; /* #e8eaed */
+  --color-text-secondary: 215 15% 70%;
+  --color-text-muted: 218 10% 50%;
+  --color-accent: 120 56% 55%;
+  --color-accent-hover: 120 59% 61%;
+  --color-accent-subtle: 124 41% 13%;
+  --color-accent-muted: 124 30% 24%;
+  --color-success: 120 56% 55%;
+  --color-danger: 356 78% 66%;
+
+  --color-gray-50: #161c2c;
+  --color-gray-100: #121828;
+  --color-gray-200: #1a2133;
+  --color-gray-300: #232b41;
+  --color-gray-400: #444c5c;
+  --color-gray-500: #747b8a;
+  --color-gray-600: #a6adbd;
+  --color-gray-700: #cfd5df;
+  --color-gray-800: #e8eaed;
+  --color-gray-900: #f5f6f7;
+  --color-gray-950: #ffffff;
+  --color-indigo-950: #060e1f;
+  --color-indigo-700: #5b6475;
+  --color-indigo-600: #444c5c;
+  --color-indigo-500: #3d4658;
+  --color-indigo-400: #747b8a;
+  --color-indigo-300: #a6adbd;
+  --color-indigo-200: #232b41;
+  --color-indigo-100: #1a2133;
+  --color-indigo-50: #121828;
+}
+
+/* ───────────────────────────────────────────────────────────────
+   04 · Vercel Guidelines (designs/4.md)
+   shadow-as-border · workflow accents · tighter tracking than 01
+   ─────────────────────────────────────────────────────────────── */
+[data-design='vclg'] {
+  --app-font-sans: var(--font-geist), Inter, system-ui, sans-serif;
+  --heading-weight: 600;
+  --heading-tracking: -0.055em;
+
+  --color-bg: 0 0% 100%;
+  --color-surface-1: 0 0% 100%;
+  --color-surface-2: 0 0% 98%; /* #fafafa */
+  --color-surface-3: 0 0% 95%; /* #f5f5f5 */
+  --color-border-subtle: 0 0% 93%;
+  --color-border: 0 0% 87%;
+  --color-text: 0 0% 9%; /* #171717 */
+  --color-text-secondary: 0 0% 30%;
+  --color-text-muted: 0 0% 53%;
+  --color-accent: 206 100% 48%; /* Develop Blue #0a72ef */
+  --color-accent-hover: 206 100% 42%;
+  --color-accent-subtle: 207 100% 92%;
+  --color-accent-muted: 207 95% 74%;
+  --color-success: 152 65% 38%;
+  --color-warning: 27 96% 53%; /* Ship Red family */
+  --color-danger: 3 100% 65%; /* Ship Red #ff5b4f */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  /* shadow-as-border stack from the spec */
+  --shadow-sm: 0 0 0 1px rgb(0 0 0 / 0.05);
+  --shadow-md:
+    0 0 0 1px rgb(0 0 0 / 0.08), 0 2px 2px rgb(0 0 0 / 0.04);
+  --shadow-lg:
+    0 0 0 1px rgb(0 0 0 / 0.08), 0 2px 2px rgb(0 0 0 / 0.04),
+    0 8px 24px rgb(0 0 0 / 0.06);
+  --shadow-xl:
+    0 0 0 1px rgb(0 0 0 / 0.08), 0 2px 2px rgb(0 0 0 / 0.04),
+    0 16px 48px rgb(0 0 0 / 0.1);
+
+  --color-gray-50: #fafafa;
+  --color-gray-100: #f5f5f5;
+  --color-gray-200: #ebebeb;
+  --color-gray-300: #d4d4d4;
+  --color-gray-400: #a1a1a1;
+  --color-gray-500: #888888;
+  --color-gray-600: #666666;
+  --color-gray-700: #404040;
+  --color-gray-800: #262626;
+  --color-gray-900: #171717;
+  --color-gray-950: #0a0a0a;
+  --color-indigo-950: #de1d8d; /* Preview Pink kept in the ramp */
+  --color-indigo-700: #000000;
+  --color-indigo-600: #171717;
+  --color-indigo-500: #0a72ef;
+  --color-indigo-400: #4a97f4;
+  --color-indigo-300: #85baf8;
+  --color-indigo-200: #c2defe;
+  --color-indigo-100: #d6ebff;
+  --color-indigo-50: #eff6ff;
+  --color-pink-500: #de1d8d;
+  --color-purple-500: #7928ca;
+}
+
+[data-design='vclg'].dark {
+  --color-bg: 0 0% 3%;
+  --color-surface-1: 0 0% 5%;
+  --color-surface-2: 0 0% 8%;
+  --color-surface-3: 0 0% 11%;
+  --color-border-subtle: 0 0% 14%;
+  --color-border: 0 0% 19%;
+  --color-text: 0 0% 93%;
+  --color-text-secondary: 0 0% 63%;
+  --color-text-muted: 0 0% 44%;
+  --color-accent: 206 100% 60%;
+  --color-accent-hover: 206 100% 68%;
+  --color-accent-subtle: 210 60% 18%;
+  --color-accent-muted: 209 45% 32%;
+  --color-danger: 3 100% 68%;
+  --shadow-sm: 0 0 0 1px rgb(255 255 255 / 0.08);
+  --shadow-md:
+    0 0 0 1px rgb(255 255 255 / 0.1), 0 2px 2px rgb(0 0 0 / 0.3);
+  --shadow-lg:
+    0 0 0 1px rgb(255 255 255 / 0.1), 0 2px 2px rgb(0 0 0 / 0.3),
+    0 8px 24px rgb(0 0 0 / 0.35);
+  --shadow-xl:
+    0 0 0 1px rgb(255 255 255 / 0.1), 0 2px 2px rgb(0 0 0 / 0.3),
+    0 16px 48px rgb(0 0 0 / 0.4);
+
+  --color-gray-50: #171717;
+  --color-gray-100: #1c1c1c;
+  --color-gray-200: #262626;
+  --color-gray-300: #333333;
+  --color-gray-400: #707070;
+  --color-gray-500: #8f8f8f;
+  --color-gray-600: #a1a1a1;
+  --color-gray-700: #c2c2c2;
+  --color-gray-800: #e0e0e0;
+  --color-gray-900: #ededed;
+  --color-gray-950: #fafafa;
+  --color-indigo-950: #de1d8d;
+  --color-indigo-700: #e0e0e0;
+  --color-indigo-600: #ffffff;
+  --color-indigo-500: #3a97f7;
+  --color-indigo-400: #62abff;
+  --color-indigo-300: #85baf8;
+  --color-indigo-200: #142c4d;
+  --color-indigo-100: #102441;
+  --color-indigo-50: #0c1b30;
+}
+
+/* ───────────────────────────────────────────────────────────────
+   05 · NovaSpark (designs/5.md)
+   SaaS classic · Nova Blue #2563EB · slate #0F172A · orange spark
+   ─────────────────────────────────────────────────────────────── */
+[data-design='nova'] {
+  --app-font-sans: var(--font-inter), Inter, system-ui, sans-serif;
+  --heading-weight: 700;
+  --heading-tracking: -0.02em;
+
+  --color-bg: 214 32% 98%; /* #F8FAFC */
+  --color-surface-1: 0 0% 100%;
+  --color-surface-2: 220 14% 96%; /* #F3F4F6 */
+  --color-surface-3: 220 13% 91%; /* #E5E7EB */
+  --color-border-subtle: 220 13% 91%;
+  --color-border: 218 14% 83%; /* #D1D5DB */
+  --color-text: 220 39% 11%; /* #111827 */
+  --color-text-secondary: 217 15% 34%; /* #4B5563 */
+  --color-text-muted: 219 9% 46%;
+  --color-accent: 217 91% 53%; /* Nova Blue #2563EB */
+  --color-accent-hover: 224 76% 48%; /* #1D4ED8 */
+  --color-accent-subtle: 214 95% 93%; /* #DBEAFE */
+  --color-accent-muted: 213 96% 78%;
+  --color-success: 142 71% 45%; /* Spark Green #22C55E */
+  --color-warning: 25 95% 53%; /* Spark Orange #F97316 */
+  --color-danger: 0 84% 60%; /* Spark Red #EF4444 */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px rgb(0 0 0 / 0.07);
+  --shadow-lg: 0 10px 15px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px rgb(0 0 0 / 0.15);
+
+  /* slate shift for all neutrals */
+  --color-gray-50: #f8fafc;
+  --color-gray-100: #f1f5f9;
+  --color-gray-200: #e2e8f0;
+  --color-gray-300: #cbd5e1;
+  --color-gray-400: #94a3b8;
+  --color-gray-500: #64748b;
+  --color-gray-600: #475569;
+  --color-gray-700: #334155;
+  --color-gray-800: #1e293b;
+  --color-gray-900: #0f172a;
+  --color-gray-950: #020617;
+  /* indigo → Nova Blue ramp */
+  --color-indigo-950: #1e3a8a;
+  --color-indigo-700: #1d4ed8;
+  --color-indigo-600: #2563eb;
+  --color-indigo-500: #3b82f6;
+  --color-indigo-400: #60a5fa;
+  --color-indigo-300: #93c5fd;
+  --color-indigo-200: #bfdbfe;
+  --color-indigo-100: #dbeafe;
+  --color-indigo-50: #eff6ff;
+  --color-orange-500: #f97316;
+}
+
+[data-design='nova'].dark {
+  /* exact mapping from spec's Dark Mode table */
+  --color-bg: 222 47% 11%; /* #0F172A */
+  --color-surface-1: 217 33% 17%; /* #1E293B */
+  --color-surface-2: 217 33% 17%;
+  --color-surface-3: 215 25% 27%; /* #334155 */
+  --color-border-subtle: 216 26% 22%;
+  --color-border: 215 25% 27%; /* #334155 */
+  --color-text: 210 40% 96%; /* #F1F5F9 */
+  --color-text-secondary: 215 20% 65%; /* #94A3B8 */
+  --color-text-muted: 215 16% 47%;
+  --color-accent: 217 91% 60%;
+  --color-accent-hover: 213 94% 68%;
+  --color-accent-subtle: 224 64% 33%;
+  --color-accent-muted: 224 60% 45%;
+
+  --color-gray-50: #1e293b;
+  --color-gray-100: #243147;
+  --color-gray-200: #2c3a52;
+  --color-gray-300: #3b4a63;
+  --color-gray-400: #64748b;
+  --color-gray-500: #94a3b8;
+  --color-gray-600: #b6c2d2;
+  --color-gray-700: #d3dce6;
+  --color-gray-800: #e6ecf3;
+  --color-gray-900: #f8fafc;
+  --color-gray-950: #ffffff;
+  --color-indigo-950: #dbeafe;
+  --color-indigo-700: #1d4ed8;
+  --color-indigo-600: #2563eb;
+  --color-indigo-500: #3b82f6;
+  --color-indigo-400: #60a5fa;
+  --color-indigo-300: #93c5fd;
+  --color-indigo-200: #1e3a8a;
+  --color-indigo-100: #1e3a8a;
+  --color-indigo-50: #172554;
+}
+
+/* ───────────────────────────────────────────────────────────────
+   06 · Aether (designs/6.md)
+   near-black #050505 · white-on-black · zinc borders · mono labels
+   Dark-only identity — forced regardless of the app toggle.
+   ─────────────────────────────────────────────────────────────── */
+[data-design='aether'],
+[data-design='aether'].dark {
+  color-scheme: dark;
+  --app-font-sans: var(--font-inter), Inter, system-ui, sans-serif;
+  --heading-weight: 500;
+  --heading-tracking: -0.01em;
+
+  --color-bg: 0 0% 2%; /* #050505 */
+  --color-surface-1: 0 0% 7%; /* #111111 */
+  --color-surface-2: 240 6% 10%; /* #18181B */
+  --color-surface-3: 240 6% 13%; /* #1F1F23 */
+  --color-border-subtle: 240 5% 13%;
+  --color-border: 240 5% 16%; /* #27272A */
+  --color-text: 0 0% 100%;
+  --color-text-secondary: 240 5% 65%; /* #A1A1AA */
+  --color-text-muted: 240 4% 46%; /* #71717A */
+  --color-accent: 0 0% 100%; /* white IS the accent */
+  --color-accent-hover: 240 5% 89%; /* #E4E4E7 */
+  --color-accent-subtle: 240 5% 16%;
+  --color-accent-muted: 240 4% 26%; /* #3F3F46 */
+  --color-success: 142 60% 45%;
+  --color-warning: 38 92% 55%;
+  --color-danger: 0 78% 58%;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 8px;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-md: 0 4px 8px rgb(0 0 0 / 0.45);
+  --shadow-lg: 0 10px 20px rgb(0 0 0 / 0.5);
+  --shadow-xl: 0 20px 40px rgb(0 0 0 / 0.6);
+
+  --color-gray-50: #1a1a1d;
+  --color-gray-100: #131316;
+  --color-gray-200: #202024;
+  --color-gray-300: #27272a;
+  --color-gray-400: #52525b;
+  --color-gray-500: #71717a;
+  --color-gray-600: #a1a1aa;
+  --color-gray-700: #d4d4d8;
+  --color-gray-800: #e4e4e7;
+  --color-gray-900: #fafafa;
+  --color-gray-950: #ffffff;
+  /* buttons become white blocks with dark labels */
+  --color-indigo-950: #e4e4e7;
+  --color-indigo-700: #d4d4d8;
+  --color-indigo-600: #ffffff;
+  --color-indigo-500: #ffffff;
+  --color-indigo-400: #e4e4e7;
+  --color-indigo-300: #d4d4d8;
+  --color-indigo-200: #3f3f46;
+  --color-indigo-100: #27272a;
+  --color-indigo-50: #1c1c1f;
+}
+
+/* white buttons need near-black labels: flip --color-white only on
+   elements that carry the solid CTA background (text-white compiles
+   to var(--color-white) in Tailwind v4) */
+[data-design='aether'] .bg-indigo-600,
+[data-design='aether'] .hover\:bg-indigo-700:hover {
+  --color-white: #09090b;
+}
+/* Aether is dark-only: hardcoded white surfaces become card surfaces */
+[data-design='aether'] .bg-white {
+  background-color: hsl(var(--color-surface-1));
+}
+[data-design='aether'] .bg-white\/60,
+[data-design='aether'] .bg-white\/70,
+[data-design='aether'] .bg-white\/80 {
+  background-color: hsl(var(--color-surface-1) / 0.7);
+}
+[data-design='vercel'].dark .bg-indigo-600,
+[data-design='vercel'].dark .hover\:bg-indigo-700:hover,
+[data-design='vclg'].dark .bg-indigo-600,
+[data-design='vclg'].dark .hover\:bg-indigo-700:hover {
+  --color-white: #171717;
+}
+
+/* ───────────────────────────────────────────────────────────────
+   07 · NomadKit (designs/7.md)
+   warm sand #D4A373 · ocean #0891B2 · forest #166534 · cream #FFFDF7
+   ─────────────────────────────────────────────────────────────── */
+[data-design='nomad'] {
+  --heading-weight: 800;
+  --heading-tracking: -0.03em;
+
+  --color-bg: 45 100% 98%; /* #FFFDF7 */
+  --color-surface-1: 0 0% 100%;
+  --color-surface-2: 40 52% 95%;
+  --color-surface-3: 37 45% 89%;
+  --color-border-subtle: 37 45% 89%;
+  --color-border: 37 38% 82%;
+  --color-text: 24 6% 15%; /* stone-800 */
+  --color-text-secondary: 24 5% 32%;
+  --color-text-muted: 20 5% 64%;
+  --color-accent: 192 91% 37%; /* Ocean #0891B2 — links/focus */
+  --color-accent-hover: 190 84% 31%;
+  --color-accent-subtle: 187 81% 90%;
+  --color-accent-muted: 189 65% 63%;
+  --color-success: 145 63% 24%; /* Forest #166534 */
+  --color-warning: 45 95% 40%; /* #CA8A04 */
+  --color-danger: 0 72% 51%; /* #DC2626 */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --shadow-sm: 0 1px 2px rgb(68 51 30 / 0.06);
+  --shadow-md: 0 4px 10px rgb(68 51 30 / 0.08);
+  --shadow-lg: 0 10px 22px rgb(68 51 30 / 0.12);
+  --shadow-xl: 0 20px 44px rgb(68 51 30 / 0.16);
+
+  /* Sand is too light for solid white-label buttons → deep earth for actions */
+  --color-indigo-950: #5c3a1e;
+  --color-indigo-700: #8f5c33;
+  --color-indigo-600: #a97142;
+  --color-indigo-500: #b8794a;
+  --color-indigo-400: #d4a373; /* Primary Sand */
+  --color-indigo-300: #e4be97;
+  --color-indigo-200: #f1dcc3;
+  --color-indigo-100: #faeedf;
+  --color-indigo-50: #fbf3e8;
+  --color-emerald-700: #14532a;
+  --color-emerald-600: #166534;
+  --color-emerald-500: #15803d;
+  --color-emerald-400: #22c55e;
+  --color-emerald-200: #bbf7d0;
+  --color-emerald-100: #dcfce7;
+  --color-emerald-50: #f0fdf4;
+  --color-amber-700: #854d0e;
+  --color-amber-600: #a16207;
+  --color-amber-500: #ca8a04;
+  --color-amber-400: #eab308;
+  --color-amber-300: #fde047;
+  --color-amber-200: #fde68a;
+  --color-amber-100: #fef3c7;
+  --color-amber-50: #fefce8;
+  --color-red-700: #991b1b;
+  --color-red-600: #b91c1c;
+  --color-red-500: #dc2626;
+  --color-red-400: #ef4444;
+  --color-red-300: #fca5a5;
+  --color-red-200: #fecaca;
+  --color-red-100: #fee2e2;
+  --color-red-50: #fef2f2;
+}
+
+[data-design='nomad'].dark {
+  --color-bg: 24 6% 10%; /* #1C1917 */
+  --color-surface-1: 25 6% 14%;
+  --color-surface-2: 26 5% 17%;
+  --color-surface-3: 27 6% 21%;
+  --color-border-subtle: 26 6% 19%;
+  --color-border: 28 13% 24%;
+  --color-text: 45 44% 97%;
+  --color-text-secondary: 40 12% 81%;
+  --color-text-muted: 20 5% 64%;
+  --color-accent: 187 85% 53%; /* bright ocean */
+  --color-accent-hover: 185 91% 69%;
+  --color-accent-subtle: 192 60% 22%;
+  --color-accent-muted: 190 45% 35%;
+  --color-success: 145 55% 42%;
+  --color-warning: 45 90% 52%;
+  --color-danger: 0 80% 60%;
+
+  --color-gray-50: #292524;
+  --color-gray-100: #211e1c;
+  --color-gray-200: #332f2c;
+  --color-gray-300: #443e38;
+  --color-gray-400: #78716c;
+  --color-gray-500: #a8a29e;
+  --color-gray-600: #d6d0c8;
+  --color-gray-700: #e7e1d9;
+  --color-gray-800: #f5f4f0;
+  --color-gray-900: #fafaf8;
+  --color-gray-950: #ffffff;
+  --color-indigo-950: #f1dcc3;
+  --color-indigo-700: #a97142;
+  --color-indigo-600: #c08b5c;
+  --color-indigo-500: #d4a373;
+  --color-indigo-400: #e4be97;
+  --color-indigo-300: #edd3b5;
+  --color-indigo-200: #4a3421;
+  --color-indigo-100: #3a2a1a;
+  --color-indigo-50: #2b2015;
+}

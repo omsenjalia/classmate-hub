@@ -1,14 +1,27 @@
 import type { Metadata } from 'next'
-import { DM_Sans, JetBrains_Mono } from 'next/font/google'
+import { DM_Sans, Geist, Inter, JetBrains_Mono } from 'next/font/google'
 import { Toaster } from 'react-hot-toast'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import './globals.css'
 import ServiceWorkerRegistration from '@/components/layout/ServiceWorkerRegistration'
+import DesignPreviewSwitcher from '@/components/layout/DesignPreviewSwitcher'
 
 const dmSans = DM_Sans({
   subsets: ['latin'],
   variable: '--font-dm-sans',
+  display: 'swap',
+})
+
+const geist = Geist({
+  subsets: ['latin'],
+  variable: '--font-geist',
+  display: 'swap',
+})
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
   display: 'swap',
 })
 
@@ -33,7 +46,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${dmSans.variable} ${jetbrainsMono.variable} dark`}
+      className={`${dmSans.variable} ${geist.variable} ${inter.variable} ${jetbrainsMono.variable} dark`}
       suppressHydrationWarning
     >
       <head>
@@ -55,6 +68,9 @@ export default function RootLayout({
                 document.documentElement.style.colorScheme = theme;
                 // Keep both storage keys in sync
                 if (theme) localStorage.setItem('classmatehub-theme', theme);
+                // Design preview: apply saved design before first paint
+                const design = localStorage.getItem('classmatehub-design');
+                if (design) document.documentElement.dataset.design = design;
               } catch(e) {}
             `,
           }}
@@ -71,6 +87,7 @@ export default function RootLayout({
         />
         <ServiceWorkerRegistration />
         {children}
+        <DesignPreviewSwitcher />
         <Analytics />
         <SpeedInsights />
       </body>
