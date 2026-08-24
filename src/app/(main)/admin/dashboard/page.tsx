@@ -1,10 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { fetchLiveMaterials } from '@/lib/supabase-data'
 import { createClient } from '@/lib/supabase/client'
-import { Material } from '@/lib/types'
 import { formatBytes } from '@/lib/utils'
+import { useAsyncData } from '@/hooks/useAsyncData'
 import {
   Users,
   FolderKanban,
@@ -31,16 +30,19 @@ const WEEKLY_UPLOADS_DATA = [
 ]
 
 export default function AdminDashboardPage() {
-  const [materials, setMaterials] = useState<Material[]>([])
-  const [memberCount, setMemberCount] = useState(0)
-
-  useEffect(() => {
-    fetchLiveMaterials().then(setMaterials)
-    const supabase = createClient()
-    supabase.from('profiles').select('*', { count: 'exact', head: true }).then(({ count }) => {
-      setMemberCount(count || 0)
-    })
+  const { data: stats } = useAsyncData(async () => {
+    const [materials, memberCount] = await Promise.all([
+      fetchLiveMaterials(),
+      createClient()
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .then(({ count }) => count || 0),
+    ])
+    return { materials, memberCount }
   }, [])
+
+  const materials = stats?.materials ?? []
+  const memberCount = stats?.memberCount ?? 0
 
   const totalMaterials = materials.length
   const totalStorageBytes = materials.reduce((acc, curr) => acc + (curr.file_size_bytes || 0), 0)
