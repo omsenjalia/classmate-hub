@@ -1,16 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import {
   fetchLiveAnnouncements,
   fetchLiveEvents,
-  fetchLivePolls,
 } from '@/lib/supabase-data'
-import { Announcement, EventItem, Poll } from '@/lib/types'
 import { SYLLABUS_PDFS } from '@/lib/constants'
 import { formatDate, formatRelativeTime } from '@/lib/utils'
 import { useAppStore } from '@/store/useAppStore'
+import { useAsyncData } from '@/hooks/useAsyncData'
+import { usePolls } from '@/hooks/usePolls'
 import {
   Megaphone,
   Calendar,
@@ -26,42 +25,30 @@ import {
 import toast from 'react-hot-toast'
 
 export default function DashboardPage() {
-  const { subjects } = useAppStore()
-  const [announcements, setAnnouncements] = useState<Announcement[]>([])
-  const [events, setEvents] = useState<EventItem[]>([])
-  const [polls, setPolls] = useState<Poll[]>([])
-
-  useEffect(() => {
-    async function loadData() {
-      const [annData, evtData, pollData] = await Promise.all([
-        fetchLiveAnnouncements(),
-        fetchLiveEvents(),
-        fetchLivePolls(),
-      ])
-      setAnnouncements(annData)
-      setEvents(evtData)
-      setPolls(pollData)
-    }
-    loadData()
+  const { subjects, user } = useAppStore()
+  const { data: feedData } = useAsyncData(async () => {
+    const [announcements, events] = await Promise.all([
+      fetchLiveAnnouncements(),
+      fetchLiveEvents(),
+    ])
+    return { announcements, events }
   }, [])
+  const { polls, vote } = usePolls(user?.id)
 
+  const announcements = feedData?.announcements ?? []
+  const events = feedData?.events ?? []
 
-  const handleQuickVote = (pollId: string, optionIndex: number) => {
-    setPolls((prev) =>
-      prev.map((poll) => {
-        if (poll.id === pollId) {
-          const currentCounts = { ...(poll.votes_count || {}) }
-          currentCounts[optionIndex] = (currentCounts[optionIndex] || 0) + 1
-          return {
-            ...poll,
-            votes_count: currentCounts,
-            total_votes: (poll.total_votes || 0) + 1,
-            user_voted_options: [optionIndex],
-          }
-        }
-        return poll
-      })
-    )
+  const handleQuickVote = async (pollId: string, optionIndex: number) => {
+    if (!user) {
+      toast.error('You must be signed in to vote!')
+      return
+    }
+
+    const ok = await vote(pollId, optionIndex, user.id)
+    if (!ok) {
+      toast.error('Could not save your vote. Please try again.')
+      return
+    }
     toast.success('Vote recorded!')
   }
 

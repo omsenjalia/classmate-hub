@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
+import { isSupabaseConfigured } from '@/lib/supabase/config'
 import {
   Announcement,
   Material,
@@ -9,132 +10,59 @@ import {
   Lab,
 } from '@/lib/types'
 
-const isSupabaseConfigured = () => {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
-  const key =
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-    process.env.SUPABASE_PUBLISHABLE_KEY
+type OrderDef = { column: string; ascending?: boolean }
 
-  return !!url && !!key && !url.includes('placeholder')
-}
-
-export async function fetchLiveAnnouncements(): Promise<Announcement[]> {
+/**
+ * Generic read helper for Supabase tables. Returns an empty array whenever
+ * credentials are missing or the query fails — callers treat that as
+ * "nothing to show" rather than an application error.
+ */
+async function fetchTable<T>(
+  table: string,
+  select: string,
+  order: OrderDef[] = []
+): Promise<T[]> {
   if (!isSupabaseConfigured()) return []
 
   try {
-    const supabase = createClient()
-    const { data, error } = await supabase
-      .from('announcements')
-      .select('*, profiles(*)')
-      .order('is_pinned', { ascending: false })
-      .order('created_at', { ascending: false })
-
+    let query = createClient().from(table).select(select)
+    for (const { column, ascending = false } of order) {
+      query = query.order(column, { ascending })
+    }
+    const { data, error } = await query
     if (error || !data) return []
-    return data as Announcement[]
+    return data as T[]
   } catch {
     return []
   }
 }
 
-export async function fetchLiveMaterials(): Promise<Material[]> {
-  if (!isSupabaseConfigured()) return []
+export const fetchLiveAnnouncements = () =>
+  fetchTable<Announcement>('announcements', '*, profiles(*)', [
+    { column: 'is_pinned' },
+    { column: 'created_at' },
+  ])
 
-  try {
-    const supabase = createClient()
-    const { data, error } = await supabase
-      .from('materials')
-      .select('*, profiles(*), subjects(*), labs(*)')
-      .order('created_at', { ascending: false })
+export const fetchLiveMaterials = () =>
+  fetchTable<Material>('materials', '*, profiles(*), subjects(*), labs(*)', [
+    { column: 'created_at' },
+  ])
 
-    if (error || !data) return []
-    return data as Material[]
-  } catch {
-    return []
-  }
-}
+export const fetchLiveEvents = () =>
+  fetchTable<EventItem>('events', '*, profiles(*), subjects(*)', [
+    { column: 'start_time', ascending: true },
+  ])
 
-export async function fetchLiveEvents(): Promise<EventItem[]> {
-  if (!isSupabaseConfigured()) return []
+export const fetchLivePolls = () =>
+  fetchTable<Poll>('polls', '*, profiles(*)', [{ column: 'created_at' }])
 
-  try {
-    const supabase = createClient()
-    const { data, error } = await supabase
-      .from('events')
-      .select('*, profiles(*), subjects(*)')
-      .order('start_time', { ascending: true })
+export const fetchLiveDeadlines = () =>
+  fetchTable<Deadline>('deadlines', '*, subjects(*)', [
+    { column: 'due_date', ascending: true },
+  ])
 
-    if (error || !data) return []
-    return data as EventItem[]
-  } catch {
-    return []
-  }
-}
+export const fetchLiveSubjects = () =>
+  fetchTable<Subject>('subjects', '*', [{ column: 'sort_order', ascending: true }])
 
-export async function fetchLivePolls(): Promise<Poll[]> {
-  if (!isSupabaseConfigured()) return []
-
-  try {
-    const supabase = createClient()
-    const { data, error } = await supabase
-      .from('polls')
-      .select('*, profiles(*)')
-      .order('created_at', { ascending: false })
-
-    if (error || !data) return []
-    return data as Poll[]
-  } catch {
-    return []
-  }
-}
-
-export async function fetchLiveDeadlines(): Promise<Deadline[]> {
-  if (!isSupabaseConfigured()) return []
-
-  try {
-    const supabase = createClient()
-    const { data, error } = await supabase
-      .from('deadlines')
-      .select('*, subjects(*)')
-      .order('due_date', { ascending: true })
-
-    if (error || !data) return []
-    return data as Deadline[]
-  } catch {
-    return []
-  }
-}
-
-export async function fetchLiveSubjects(): Promise<Subject[]> {
-  if (!isSupabaseConfigured()) return []
-
-  try {
-    const supabase = createClient()
-    const { data, error } = await supabase
-      .from('subjects')
-      .select('*')
-      .order('sort_order', { ascending: true })
-
-    if (error || !data) return []
-    return data as Subject[]
-  } catch {
-    return []
-  }
-}
-
-export async function fetchLiveLabs(): Promise<Lab[]> {
-  if (!isSupabaseConfigured()) return []
-
-  try {
-    const supabase = createClient()
-    const { data, error } = await supabase
-      .from('labs')
-      .select('*')
-      .order('sort_order', { ascending: true })
-
-    if (error || !data) return []
-    return data as Lab[]
-  } catch {
-    return []
-  }
-}
+export const fetchLiveLabs = () =>
+  fetchTable<Lab>('labs', '*', [{ column: 'sort_order', ascending: true }])
