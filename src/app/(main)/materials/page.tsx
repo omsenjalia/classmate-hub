@@ -3,7 +3,8 @@
 import { Suspense, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { FolderKanban, Filter as FilterIcon, Inbox, Plus } from 'lucide-react'
+import { Download, FolderKanban, Filter as FilterIcon, Inbox, Loader2, Plus } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { useAppStore } from '@/store/useAppStore'
 import { useMaterials } from '@/hooks/useMaterials'
 import PageHeader from '@/components/ui/PageHeader'
@@ -19,6 +20,7 @@ function MaterialsContent() {
 
   const { materials, labs, isLoading, error } = useMaterials()
   const [showFilters, setShowFilters] = useState(false)
+  const [isDownloadingAll, setIsDownloadingAll] = useState(false)
   const [filters, setFilters] = useState<MaterialFilterState>({
     search: searchParams.get('search') || '',
     selectedSubject: searchParams.get('subject') || '',
@@ -66,6 +68,36 @@ function MaterialsContent() {
 
   const hasActiveFilters =
     filters.selectedSubject || filters.selectedLab || filters.selectedFileType || filters.search
+
+  const downloadAll = async () => {
+    if (isDownloadingAll || filteredMaterials.length === 0) return
+    setIsDownloadingAll(true)
+    try {
+      const response = await fetch('/api/materials/download-all', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ materialIds: filteredMaterials.map((material) => material.id) }),
+      })
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as { error?: string } | null
+        throw new Error(payload?.error || 'Could not create the materials archive')
+      }
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const anchor = document.createElement('a')
+      anchor.href = url
+      anchor.download = 'classmate-materials.zip'
+      document.body.appendChild(anchor)
+      anchor.click()
+      anchor.remove()
+      URL.revokeObjectURL(url)
+      toast.success('Download started')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Download failed')
+    } finally {
+      setIsDownloadingAll(false)
+    }
+  }
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -136,11 +168,24 @@ function MaterialsContent() {
               }
             />
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredMaterials.map((item) => (
-                <MaterialCard key={item.id} item={item} />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {filteredMaterials.map((item) => (
+                  <MaterialCard key={item.id} item={item} />
+                ))}
+              </div>
+              <div className="flex justify-center pt-4">
+                <button
+                  type="button"
+                  onClick={downloadAll}
+                  disabled={isDownloadingAll}
+                  className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-medium text-white shadow-md shadow-indigo-600/20 transition-all hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isDownloadingAll ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                  {isDownloadingAll ? 'Preparing ZIP...' : 'Download All'}
+                </button>
+              </div>
+            </>
           )}
         </div>
       </div>
