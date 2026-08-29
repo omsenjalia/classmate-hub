@@ -36,30 +36,6 @@ export default function RootLayout({
       className={`${dmSans.variable} ${jetbrainsMono.variable} dark`}
       suppressHydrationWarning
     >
-      <head>
-        {/* Inline script to set theme before paint to prevent flash */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              try {
-                // Read from both storage keys: direct key and Zustand persist key
-                const direct = localStorage.getItem('classmatehub-theme');
-                let fromSession = null;
-                try {
-                  const session = JSON.parse(localStorage.getItem('classmatehub-session') || '{}');
-                  fromSession = session?.state?.theme || null;
-                } catch(e) {}
-                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                const theme = direct || fromSession || (prefersDark ? 'dark' : 'light');
-                document.documentElement.classList.toggle('dark', theme === 'dark');
-                document.documentElement.style.colorScheme = theme;
-                // Keep both storage keys in sync
-                if (theme) localStorage.setItem('classmatehub-theme', theme);
-              } catch(e) {}
-            `,
-          }}
-        />
-      </head>
       <body className="antialiased min-h-screen bg-page text-primary">
         <Toaster
           position="top-right"
