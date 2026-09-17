@@ -6,6 +6,7 @@ const nextConfig = {
     'dono-03.danbot.host:*',
     'http://dono-03.danbot.host',
     'https://dono-03.danbot.host',
+    '*.omsenjalia.me'
   ],
   turbopack: {
     root: process.cwd(),
