@@ -1,7 +1,7 @@
 # ClassmateHub
 
 ClassmateHub is a Next.js 16 platform for course materials, announcements,
-events, deadlines, polls, and class chat.
+events, deadlines, polls, and class chat
 
 ## Getting started
 
