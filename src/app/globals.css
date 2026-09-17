@@ -1,5 +1,9 @@
 @import "tailwindcss" source(none);
-@source "..";
+@source "../app";
+@source "../components";
+@source "../hooks";
+@source "../lib";
+@source "../store";
 @import "./design-themes.css";
 
 /* Tailwind v4: enable class-based dark mode (toggle .dark on <html>) */
