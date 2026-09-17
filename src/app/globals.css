@@ -1,4 +1,5 @@
-@import "tailwindcss";
+@import "tailwindcss" source(none);
+@source "..";
 @import "./design-themes.css";
 
 /* Tailwind v4: enable class-based dark mode (toggle .dark on <html>) */
