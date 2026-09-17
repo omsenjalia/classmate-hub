@@ -1,4 +1,12 @@
-@import "tailwindcss";
+/*
+ * Tailwind v4: opt out of automatic source detection (`source(none)`).
+ * Auto-detection scans the entire project directory. Some hosts place
+ * runtime artifacts in the project root (e.g. PM2's `.pm2/*.sock` unix
+ * sockets), and scanning those files crashes the build with
+ * "No such device or address (os error 6)". Instead, only scan `src/`.
+ */
+@import "tailwindcss" source(none);
+@source "../";
 
 /* Tailwind v4: enable class-based dark mode (toggle .dark on <html>) */
 @custom-variant dark (&:where(.dark, .dark *));
