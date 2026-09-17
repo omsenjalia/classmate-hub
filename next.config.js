@@ -6,11 +6,12 @@ const nextConfig = {
     'dono-03.danbot.host:*',
     'http://dono-03.danbot.host',
     'https://dono-03.danbot.host',
-    '*.omsenjalia.me'
+    '*.omsenjalia.me',
+    'omsenjalia.me',
   ],
   turbopack: {
     root: process.cwd(),
   },
 };
 
-export default nextConfig;
+module.exports = nextConfig;
