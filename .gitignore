@@ -40,3 +40,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# host / process-manager runtime artifacts (e.g. danbot PM2 in project root)
+.pm2
+*.sock
+*.pid
