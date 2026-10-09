@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 import { fetchLiveSubjects } from '@/lib/supabase-data'
 import { useAppStore } from '@/store/useAppStore'
 
-/** Loads shared navigation data once for every page in the authenticated shell. */
+/** Loads shared navigation data once for every page in the app shell. */
 export default function AppDataProvider({ children }: { children: React.ReactNode }) {
   const setSubjects = useAppStore((state) => state.setSubjects)
 

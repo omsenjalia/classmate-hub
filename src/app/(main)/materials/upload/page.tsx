@@ -1,116 +1,277 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { useDropzone, type FileRejection } from 'react-dropzone'
-import { ArrowRight, FileText, Loader2, Upload, Video, X } from 'lucide-react'
+import { Suspense, useEffect, useRef, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { FileArrowUpIcon, LinkIcon, LockKeyIcon, XIcon } from '@phosphor-icons/react/dist/ssr'
 import toast from 'react-hot-toast'
-import { MAX_FILE_SIZE_BYTES } from '@/lib/constants'
-import { formatBytes } from '@/lib/utils'
+import { ALLOWED_FILE_EXTENSIONS, MAX_FILE_SIZE_BYTES } from '@/lib/constants'
+import { cn, formatBytes, getFileTypeFromName, parseTags } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { fetchLiveLabs } from '@/lib/supabase-data'
 import { uploadFileInGithubChunks } from '@/lib/github-upload'
 import { useAppStore } from '@/store/useAppStore'
+import PageHeader from '@/components/layout/PageHeader'
+import { Button, ButtonLink, IconButton } from '@/components/ui/Button'
+import EmptyState from '@/components/ui/EmptyState'
+import Field from '@/components/ui/Field'
+import FileTile from '@/components/materials/FileTile'
+import MaterialFields, { type MaterialFieldValues } from '@/components/materials/MaterialFields'
+import { getVideoEmbedUrl } from '@/components/materials/MaterialPreview'
 import type { Lab } from '@/lib/types'
 
-const ALLOWED_UPLOAD_TYPES = {
-  'application/pdf': ['.pdf'],
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
-  'image/png': ['.png'],
-  'image/jpeg': ['.jpg', '.jpeg'],
-  'text/plain': ['.c', '.py', '.java', '.js', '.ts'],
-  'application/zip': ['.zip'],
-  'application/x-rar-compressed': ['.rar'],
+const ACCEPT = ALLOWED_FILE_EXTENSIONS.map((ext) => `.${ext}`).join(',')
+
+type Mode = 'file' | 'video'
+type Errors = Partial<Record<'file' | 'video' | 'title', string>>
+
+function titleFromFileName(name: string) {
+  return name.replace(/\.[^/.]+$/, '').replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim()
 }
 
-function getFileType(fileName: string) {
-  const extension = fileName.split('.').pop()?.toLowerCase()
-  if (extension === 'pdf') return 'pdf'
-  if (['c', 'py', 'java', 'js', 'ts'].includes(extension || '')) return 'code'
-  if (['png', 'jpg', 'jpeg'].includes(extension || '')) return 'image'
-  if (['zip', 'rar'].includes(extension || '')) return 'zip'
-  return 'docx'
+function validateFile(file: File): string | null {
+  const ext = file.name.split('.').pop()?.toLowerCase() || ''
+  if (!ALLOWED_FILE_EXTENSIONS.includes(ext)) {
+    return `.${ext || '?'} files aren't supported. Use PDF, DOCX, images, code or ZIP.`
+  }
+  if (file.size > MAX_FILE_SIZE_BYTES) return 'Files must be 100 MB or smaller.'
+  return null
 }
 
-export default function MaterialUploadPage() {
+function UploadForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { user, subjects } = useAppStore()
-  const [mode, setMode] = useState<'file' | 'video'>('file')
+  const fileInput = useRef<HTMLInputElement>(null)
+
+  const [mode, setMode] = useState<Mode>('file')
   const [file, setFile] = useState<File | null>(null)
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
   const [videoUrl, setVideoUrl] = useState('')
-  const [subjectId, setSubjectId] = useState('')
-  const [labId, setLabId] = useState('')
-  const [tagsInput, setTagsInput] = useState('')
+  const [values, setValues] = useState<MaterialFieldValues>({
+    title: '',
+    subjectId: searchParams.get('subject') || '',
+    labId: '',
+    description: '',
+    tags: '',
+  })
   const [labs, setLabs] = useState<Lab[]>([])
-  const [uploading, setUploading] = useState(false)
-  const [progress, setProgress] = useState(0)
+  const [errors, setErrors] = useState<Errors>({})
+  const [progress, setProgress] = useState<number | null>(null)
 
-  useEffect(() => { fetchLiveLabs().then(setLabs) }, [])
-  const availableLabs = useMemo(() => labs.filter((lab) => lab.subject_id === subjectId), [labs, subjectId])
-
-  const onDrop = useCallback((accepted: File[], rejected: FileRejection[]) => {
-    if (rejected.length) return toast.error(rejected[0].errors[0]?.message || 'File was rejected')
-    const selected = accepted[0]
-    if (!selected) return
-    setFile(selected)
-    setTitle((current) => current || selected.name.replace(/\.[^/.]+$/, '').replace(/_/g, ' '))
+  useEffect(() => {
+    fetchLiveLabs().then(setLabs)
   }, [])
-  const dropzone = useDropzone({ onDrop, maxFiles: 1, maxSize: MAX_FILE_SIZE_BYTES, accept: ALLOWED_UPLOAD_TYPES })
+
+  if (!user) {
+    return (
+      <>
+        <PageHeader backHref="/materials" />
+        <EmptyState
+          icon={LockKeyIcon}
+          title="Sign in to upload"
+          description="Uploads are tied to your student account so classmates know who shared what."
+          action={<ButtonLink href="/login">Sign in</ButtonLink>}
+        />
+      </>
+    )
+  }
+
+  const pickFile = (selected: File | undefined) => {
+    if (!selected) return
+    const problem = validateFile(selected)
+    if (problem) {
+      setErrors((current) => ({ ...current, file: problem }))
+      return
+    }
+    setFile(selected)
+    setErrors((current) => ({ ...current, file: undefined }))
+    setValues((current) => (current.title ? current : { ...current, title: titleFromFileName(selected.name) }))
+  }
+
+  const uploading = progress !== null
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
-    if (!user) return toast.error('Please sign in before publishing material')
-    if (!title.trim()) return toast.error('Please enter a title')
-    if (mode === 'file' && !file) return toast.error('Please choose a file')
-    if (mode === 'video' && !videoUrl.trim()) return toast.error('Please enter a video URL')
+    if (!user || uploading) return
 
-    setUploading(true)
+    const nextErrors: Errors = {}
+    if (mode === 'file' && !file) nextErrors.file = 'Choose a file to upload.'
+    if (mode === 'video' && !/^https?:\/\//.test(videoUrl.trim())) nextErrors.video = 'Paste a full YouTube or Google Drive link.'
+    if (!values.title.trim()) nextErrors.title = 'Give the material a title.'
+    setErrors(nextErrors)
+    if (Object.keys(nextErrors).length) return
+
     setProgress(0)
     let uploadedKey: string | null = null
     try {
       let fileUrl: string | null = null
-      if (file) {
+      if (mode === 'file' && file) {
         const upload = await uploadFileInGithubChunks(file, setProgress)
         uploadedKey = upload.key
         fileUrl = upload.publicUrl
       }
-      const tags = tagsInput.split(',').map((tag) => tag.trim().toLowerCase()).filter(Boolean)
-      const { data, error } = await createClient().from('materials').insert({
-        title: title.trim(), description: description.trim() || null,
-        file_url: fileUrl, file_key: uploadedKey, file_name: file?.name || null,
-        file_type: mode === 'file' && file ? getFileType(file.name) : 'video',
-        file_size_bytes: file?.size || null, video_url: mode === 'video' ? videoUrl.trim() : null,
-        subject_id: subjectId || null, lab_id: labId || null, tags: tags.length ? tags : null,
-        uploaded_by: user.id, sort_order: 0, is_hidden: false, download_count: 0,
-      }).select('id').single()
-      if (error || !data) throw new Error(error?.message || 'Failed to save material details')
-      setProgress(100)
-      toast.success('Material published')
-      router.push(`/materials/${data.id}`)
+      const { data, error } = await createClient()
+        .from('materials')
+        .insert({
+          title: values.title.trim(),
+          description: values.description.trim() || null,
+          file_url: fileUrl,
+          file_key: uploadedKey,
+          file_name: mode === 'file' ? file?.name ?? null : null,
+          file_type: mode === 'file' && file ? getFileTypeFromName(file.name) : 'video',
+          file_size_bytes: mode === 'file' ? file?.size ?? null : null,
+          video_url: mode === 'video' ? videoUrl.trim() : null,
+          subject_id: values.subjectId || null,
+          lab_id: values.labId || null,
+          tags: parseTags(values.tags),
+          uploaded_by: user.id,
+          sort_order: 0,
+          is_hidden: false,
+          download_count: 0,
+        })
+        .select('id')
+        .single()
+      if (error || !data) throw new Error(error?.message || 'Could not save the material')
+      toast.success('Published to the library')
+      router.replace(`/materials/${data.id}`)
     } catch (error) {
       if (uploadedKey) await fetch(`/api/upload/${uploadedKey}`, { method: 'DELETE' }).catch(() => undefined)
       toast.error(error instanceof Error ? error.message : 'Upload failed')
-    } finally {
-      setUploading(false)
+      setProgress(null)
     }
   }
 
-  return <div className="max-w-2xl mx-auto space-y-6">
-    <div><h1 className="text-2xl font-bold text-primary flex items-center gap-2"><Upload className="w-6 h-6 text-indigo-500" /> Upload Study Material</h1><p className="text-sm text-muted mt-1">Files are securely stored in the class GitHub repository.</p></div>
-    <form onSubmit={handleSubmit} className="bg-card border border-border rounded-2xl p-6 space-y-5 shadow-xl">
-      <div className="flex bg-page p-1 rounded-xl border border-border">
-        <button type="button" onClick={() => setMode('file')} className={`flex-1 py-2 rounded-lg text-xs font-medium ${mode === 'file' ? 'bg-indigo-600 text-white' : 'text-muted'}`}><FileText className="w-4 h-4 inline mr-2" />File</button>
-        <button type="button" onClick={() => setMode('video')} className={`flex-1 py-2 rounded-lg text-xs font-medium ${mode === 'video' ? 'bg-indigo-600 text-white' : 'text-muted'}`}><Video className="w-4 h-4 inline mr-2" />Video link</button>
+  const videoLooksValid = videoUrl.trim() && getVideoEmbedUrl(videoUrl.trim())
+
+  return (
+    <form onSubmit={handleSubmit} noValidate className="space-y-7 pb-28 md:pb-0">
+      <PageHeader title="Upload" backHref="/materials" meta="Shared with everyone in your class" />
+
+      <div role="radiogroup" aria-label="What are you sharing?" className="grid grid-cols-2 gap-1 rounded-[12px] bg-surface-2 p-1">
+        {(
+          [
+            { value: 'file', label: 'File', icon: FileArrowUpIcon },
+            { value: 'video', label: 'Video link', icon: LinkIcon },
+          ] as const
+        ).map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            role="radio"
+            aria-checked={mode === option.value}
+            onClick={() => setMode(option.value)}
+            className={cn(
+              'flex h-10 items-center justify-center gap-2 rounded-[9px] text-sm font-medium transition-colors',
+              mode === option.value ? 'bg-surface text-ink shadow-float' : 'text-muted'
+            )}
+          >
+            <option.icon className="size-[18px]" /> {option.label}
+          </button>
+        ))}
       </div>
-      {mode === 'file' ? file ? <div className="bg-page border border-border rounded-xl p-4 flex justify-between"><span className="text-sm text-primary"><FileText className="w-4 h-4 inline mr-2" />{file.name} <small className="text-muted">{formatBytes(file.size)}</small></span><button type="button" onClick={() => setFile(null)} className="text-muted"><X /></button></div> : <div {...dropzone.getRootProps()} className="border-2 border-dashed border-border rounded-xl p-8 text-center cursor-pointer"><input {...dropzone.getInputProps()} /><Upload className="w-7 h-7 text-indigo-500 mx-auto mb-2" /><p className="text-sm text-primary">Drop a file here or click to select</p><p className="text-xs text-muted mt-1">Maximum size: 100MB</p></div> : <input required type="url" value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="YouTube or Google Drive URL" className="w-full bg-page border border-border rounded-xl px-4 py-2.5 text-sm text-primary" />}
-      <input required value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Material title" className="w-full bg-page border border-border rounded-xl px-4 py-2.5 text-sm text-primary" />
-      <div className="grid sm:grid-cols-2 gap-4"><select value={subjectId} onChange={(e) => { setSubjectId(e.target.value); setLabId('') }} className="bg-page border border-border rounded-xl px-3 py-2.5 text-sm text-primary"><option value="">General material</option>{subjects.map((subject) => <option key={subject.id} value={subject.id}>{subject.code} — {subject.name}</option>)}</select><select value={labId} onChange={(e) => setLabId(e.target.value)} disabled={!availableLabs.length} className="bg-page border border-border rounded-xl px-3 py-2.5 text-sm text-primary disabled:opacity-50"><option value="">Lecture / general notes</option>{availableLabs.map((lab) => <option key={lab.id} value={lab.id}>{lab.name}</option>)}</select></div>
-      <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description (optional)" rows={3} className="w-full bg-page border border-border rounded-xl px-4 py-2.5 text-sm text-primary" />
-      <input value={tagsInput} onChange={(e) => setTagsInput(e.target.value)} placeholder="Tags, comma separated" className="w-full bg-page border border-border rounded-xl px-4 py-2.5 text-sm text-primary" />
-      {uploading && <div className="space-y-1"><div className="flex justify-between text-xs text-muted"><span>Uploading to GitHub storage...</span><span>{progress}%</span></div><div className="h-2 bg-page rounded-full"><div className="h-full bg-indigo-600 rounded-full" style={{ width: `${progress}%` }} /></div></div>}
-      <button disabled={uploading} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl text-sm font-medium disabled:opacity-50">{uploading ? <><Loader2 className="w-4 h-4 animate-spin inline mr-2" />Uploading ({progress}%)</> : <>Publish Material <ArrowRight className="w-4 h-4 inline ml-1" /></>}</button>
+
+      {mode === 'file' ? (
+        <div className="space-y-1.5">
+          {file ? (
+            <div className="flex items-center gap-3 rounded-card border border-line bg-surface p-3">
+              <FileTile material={{ file_name: file.name, file_type: getFileTypeFromName(file.name), video_url: null }} />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[15px] font-medium">{file.name}</p>
+                <p className="text-sm text-muted">{formatBytes(file.size)}</p>
+              </div>
+              <IconButton label="Remove file" onClick={() => setFile(null)} disabled={uploading}>
+                <XIcon className="size-5" />
+              </IconButton>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => fileInput.current?.click()}
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={(event) => {
+                event.preventDefault()
+                pickFile(event.dataTransfer.files?.[0])
+              }}
+              aria-describedby="file-help"
+              className={cn(
+                'pressable flex w-full flex-col items-center justify-center gap-2 rounded-card border-2 border-dashed bg-surface px-6 py-10 text-center',
+                errors.file ? 'border-danger' : 'border-line-strong hover:border-accent'
+              )}
+            >
+              <span className="flex size-12 items-center justify-center rounded-tile bg-accent-soft text-accent-soft-ink">
+                <FileArrowUpIcon className="size-6" weight="duotone" />
+              </span>
+              <span className="text-[15px] font-medium">Choose a file</span>
+              <span id="file-help" className="text-sm text-muted">
+                PDF, DOCX, images, code or ZIP, up to 100 MB
+              </span>
+            </button>
+          )}
+          <input
+            ref={fileInput}
+            type="file"
+            accept={ACCEPT}
+            className="sr-only"
+            tabIndex={-1}
+            onChange={(event) => {
+              pickFile(event.target.files?.[0])
+              event.target.value = ''
+            }}
+          />
+          {errors.file && <p className="text-sm text-danger">{errors.file}</p>}
+        </div>
+      ) : (
+        <Field
+          label="Video link"
+          error={errors.video}
+          hint={videoUrl && !videoLooksValid ? "We can't preview this link, but it will still open." : 'YouTube or Google Drive'}
+        >
+          {(props) => (
+            <input
+              {...props}
+              type="url"
+              inputMode="url"
+              value={videoUrl}
+              onChange={(event) => setVideoUrl(event.target.value)}
+              placeholder="https://youtu.be/..."
+              autoCapitalize="none"
+              autoCorrect="off"
+              className="field"
+            />
+          )}
+        </Field>
+      )}
+
+      <MaterialFields
+        values={values}
+        onChange={(patch) => {
+          setValues((current) => ({ ...current, ...patch }))
+          if (patch.title) setErrors((current) => ({ ...current, title: undefined }))
+        }}
+        subjects={subjects}
+        labs={labs}
+        titleError={errors.title}
+      />
+
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-bg/92 px-4 pb-[calc(env(safe-area-inset-bottom)+10px)] pt-2.5 backdrop-blur-xl md:static md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
+        <div className="mx-auto max-w-md space-y-2 md:mx-0">
+          {uploading && mode === 'file' && (
+            <div className="h-1 overflow-hidden rounded-full bg-surface-2" role="progressbar" aria-valuenow={progress ?? 0} aria-valuemin={0} aria-valuemax={100} aria-label="Upload progress">
+              <div className="h-full bg-accent transition-[width] duration-300" style={{ width: `${progress}%` }} />
+            </div>
+          )}
+          <Button type="submit" size="lg" className="w-full md:w-auto md:min-w-48" loading={uploading}>
+            {uploading ? (mode === 'file' ? `Uploading ${progress}%` : 'Publishing') : 'Publish'}
+          </Button>
+        </div>
+      </div>
     </form>
-  </div>
+  )
+}
+
+export default function MaterialUploadPage() {
+  return (
+    <Suspense>
+      <UploadForm />
+    </Suspense>
+  )
 }

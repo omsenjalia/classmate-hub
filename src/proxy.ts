@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getSupabaseKey, getSupabaseUrl, isSupabaseConfigured } from '@/lib/supabase/config'
 
-const AUTH_REQUIRED_PREFIXES = ['/materials/upload', '/polls/create', '/events/create', '/deadlines/create', '/admin']
+const AUTH_REQUIRED_PREFIXES = ['/materials/upload', '/saved', '/admin']
 const AUTH_PAGES = ['/login', '/register']
 
 export async function proxy(request: NextRequest) {
@@ -36,11 +36,13 @@ export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname
 
   if (user && AUTH_PAGES.some((prefix) => path.startsWith(prefix))) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+    return NextResponse.redirect(new URL('/materials', request.url))
   }
 
   if (!user && AUTH_REQUIRED_PREFIXES.some((prefix) => path.startsWith(prefix))) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    const login = new URL('/login', request.url)
+    login.searchParams.set('next', path)
+    return NextResponse.redirect(login)
   }
 
   if (path.startsWith('/admin')) {
@@ -51,7 +53,7 @@ export async function proxy(request: NextRequest) {
       .single()
 
     if (profile?.role !== 'admin') {
-      return NextResponse.redirect(new URL('/dashboard', request.url))
+      return NextResponse.redirect(new URL('/materials', request.url))
     }
   }
 

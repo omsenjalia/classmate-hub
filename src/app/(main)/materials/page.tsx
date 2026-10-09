@@ -1,202 +1,180 @@
 'use client'
 
 import { Suspense, useMemo, useState } from 'react'
-import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
-import { Download, FolderKanban, Filter as FilterIcon, Inbox, Loader2, Plus } from 'lucide-react'
-import toast from 'react-hot-toast'
+import { ArrowsDownUpIcon, BooksIcon, MagnifyingGlassIcon, WarningIcon } from '@phosphor-icons/react/dist/ssr'
 import { useAppStore } from '@/store/useAppStore'
 import { useMaterials } from '@/hooks/useMaterials'
-import PageHeader from '@/components/ui/PageHeader'
+import { SORT_OPTIONS, useMaterialFilters } from '@/hooks/useMaterialFilters'
+import { FILE_KINDS } from '@/lib/utils'
+import PageHeader from '@/components/layout/PageHeader'
+import Sheet from '@/components/ui/Sheet'
 import EmptyState from '@/components/ui/EmptyState'
-import MaterialFilters, { type MaterialFilterState } from '@/components/materials/MaterialFilters'
-import MaterialCard from '@/components/materials/MaterialCard'
+import { Button, ButtonLink } from '@/components/ui/Button'
+import MaterialList, { MaterialListSkeleton } from '@/components/materials/MaterialList'
+import DownloadAllButton from '@/components/materials/DownloadAllButton'
+import { ChipRow, FilterButton, SearchField } from '@/components/materials/LibraryControls'
 
-function MaterialsContent() {
-  const searchParams = useSearchParams()
-
+function Library() {
   const subjects = useAppStore((state) => state.subjects)
-  const user = useAppStore((state) => state.user)
-
   const { materials, labs, isLoading, error } = useMaterials()
-  const [showFilters, setShowFilters] = useState(false)
-  const [isDownloadingAll, setIsDownloadingAll] = useState(false)
-  const [filters, setFilters] = useState<MaterialFilterState>({
-    search: searchParams.get('search') || '',
-    selectedSubject: searchParams.get('subject') || '',
-    selectedLab: '',
-    selectedFileType: '',
-    sortBy: 'newest',
-  })
+  const { filters, update, reset, results, sheetFilterCount, isFiltered } = useMaterialFilters(materials)
+  const [sheetOpen, setSheetOpen] = useState(false)
 
-  const updateFilters = (patch: Partial<MaterialFilterState>) =>
-    setFilters((current) => ({ ...current, ...patch }))
+  const subjectOptions = useMemo(
+    () => [
+      { value: '', label: 'All' },
+      ...subjects.map((subject) => ({ value: subject.id, label: subject.code, title: subject.name })),
+    ],
+    [subjects]
+  )
 
-  const resetFilters = () =>
-    updateFilters({ search: '', selectedSubject: '', selectedLab: '', selectedFileType: '' })
+  const labOptions = useMemo(() => {
+    const subjectLabs = labs.filter((lab) => lab.subject_id === filters.subject)
+    if (!subjectLabs.length) return []
+    return [
+      { value: '', label: 'Everything' },
+      { value: 'lecture', label: 'Lecture notes' },
+      ...subjectLabs.map((lab) => ({ value: lab.id, label: lab.name })),
+    ]
+  }, [labs, filters.subject])
 
-  const availableLabs = useMemo(() => {
-    if (!filters.selectedSubject) return []
-    return labs.filter((l) => l.subject_id === filters.selectedSubject)
-  }, [filters.selectedSubject, labs])
-
-  const filteredMaterials = useMemo(() => {
-    const { search, selectedSubject, selectedLab, selectedFileType, sortBy } = filters
-    return materials
-      .filter((item) => {
-        if (item.is_hidden) return false
-        if (selectedSubject && item.subject_id !== selectedSubject) return false
-        if (selectedLab && item.lab_id !== selectedLab) return false
-        if (selectedFileType && item.file_type !== selectedFileType) return false
-
-        if (search.trim()) {
-          const q = search.toLowerCase().trim()
-          const matchTitle = item.title.toLowerCase().includes(q)
-          const matchDesc = item.description?.toLowerCase().includes(q)
-          const matchCode = item.subjects?.code.toLowerCase().includes(q)
-          const matchTag = item.tags?.some((t) => t.toLowerCase().includes(q))
-          return matchTitle || matchDesc || matchCode || matchTag
-        }
-        return true
-      })
-      .sort((a, b) => {
-        if (sortBy === 'downloads') return b.download_count - a.download_count
-        if (sortBy === 'admin') return a.sort_order - b.sort_order
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      })
-  }, [materials, filters])
-
-  const hasActiveFilters =
-    filters.selectedSubject || filters.selectedLab || filters.selectedFileType || filters.search
-
-  const downloadAll = async () => {
-    if (isDownloadingAll || filteredMaterials.length === 0) return
-    setIsDownloadingAll(true)
-    try {
-      const response = await fetch('/api/materials/download-all', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ materialIds: filteredMaterials.map((material) => material.id) }),
-      })
-      if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as { error?: string } | null
-        throw new Error(payload?.error || 'Could not create the materials archive')
-      }
-      const blob = await response.blob()
-      const url = URL.createObjectURL(blob)
-      const anchor = document.createElement('a')
-      anchor.href = url
-      anchor.download = 'classmate-materials.zip'
-      document.body.appendChild(anchor)
-      anchor.click()
-      anchor.remove()
-      URL.revokeObjectURL(url)
-      toast.success('Download started')
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Download failed')
-    } finally {
-      setIsDownloadingAll(false)
-    }
-  }
+  const activeSubject = subjects.find((subject) => subject.id === filters.subject)
+  const sortLabel = SORT_OPTIONS.find((option) => option.value === filters.sort)?.label
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-4">
       <PageHeader
-        icon={FolderKanban}
-        iconClassName="w-6 h-6 text-indigo-600 dark:text-indigo-400"
-        title="Class Study Materials"
-        subtitle="Syllabus guides, practical experiment manuals, solution codes, and lecture videos."
-        actions={
-          <>
-            {/* Mobile filter toggle */}
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className="lg:hidden bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium px-4 py-2.5 rounded-xl flex items-center gap-2 transition-colors"
-            >
-              <FilterIcon className="w-4 h-4" /> Filters
-              {hasActiveFilters && <span className="w-2 h-2 rounded-full bg-indigo-500" />}
-            </button>
-
-            {user && (
-              <Link
-                href="/materials/upload"
-                className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all shadow-md shadow-indigo-600/20"
-              >
-                <Plus className="w-4 h-4" /> Upload Material
-              </Link>
-            )}
-          </>
-        }
+        title="Library"
+        meta={activeSubject ? activeSubject.name : 'Notes, lab manuals, code and lectures for your class'}
       />
 
-      {/* Main Layout: Left Sidebar Filters + Right Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        <MaterialFilters
-          subjects={subjects}
-          availableLabs={availableLabs}
-          filters={filters}
-          onChange={updateFilters}
-          onReset={resetFilters}
-          hasActiveFilters={!!hasActiveFilters}
-          showOnMobile={showFilters}
-          onClose={() => setShowFilters(false)}
+      <div className="sticky top-0 z-30 -mx-4 space-y-3 bg-bg/92 px-4 pb-3 pt-[calc(env(safe-area-inset-top)+8px)] backdrop-blur-xl sm:-mx-6 sm:px-6 md:top-16 md:pt-3">
+        <div className="flex items-center gap-2">
+          <SearchField value={filters.q} onChange={(q) => update({ q })} />
+          <FilterButton count={sheetFilterCount} onClick={() => setSheetOpen(true)} />
+        </div>
+        {subjects.length > 0 && (
+          <ChipRow
+            label="Subject"
+            mono
+            options={subjectOptions}
+            value={filters.subject}
+            onChange={(subject) => update({ subject, lab: '' })}
+          />
+        )}
+      </div>
+
+      {isLoading ? (
+        <MaterialListSkeleton />
+      ) : error ? (
+        <EmptyState
+          icon={WarningIcon}
+          title="Couldn't load the library"
+          description="Check your connection and try again."
+          action={
+            <Button variant="secondary" onClick={() => window.location.reload()}>
+              Retry
+            </Button>
+          }
         />
-
-        {/* Right Materials Card Grid */}
-        <div className="lg:col-span-3 space-y-4">
-          <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 font-mono">
-            <span>Showing {filteredMaterials.length} materials</span>
-            {filters.selectedSubject && (
-              <span className="text-indigo-600 dark:text-indigo-400">
-                Filtered by Subject: {subjects.find((s) => s.id === filters.selectedSubject)?.code}
-              </span>
-            )}
+      ) : results.length === 0 ? (
+        isFiltered ? (
+          <EmptyState
+            icon={MagnifyingGlassIcon}
+            title="Nothing matches"
+            description={filters.q ? `No materials for "${filters.q}" with these filters.` : 'No materials with these filters yet.'}
+            action={
+              <Button variant="secondary" onClick={reset}>
+                Clear filters
+              </Button>
+            }
+          />
+        ) : (
+          <EmptyState
+            icon={BooksIcon}
+            title="The library is empty"
+            description="Be the first to share notes, a lab manual or solution code with the class."
+            action={<ButtonLink href="/materials/upload">Upload material</ButtonLink>}
+          />
+        )
+      ) : (
+        <section aria-label="Materials" className="space-y-3">
+          <div className="flex items-center justify-between text-sm">
+            <p className="text-muted" aria-live="polite">
+              {results.length} {results.length === 1 ? 'material' : 'materials'}
+            </p>
+            <button
+              type="button"
+              onClick={() => setSheetOpen(true)}
+              className="-mr-2 flex h-9 items-center gap-1.5 rounded-full px-2 font-medium text-ink-2 hover:bg-surface-2"
+            >
+              <ArrowsDownUpIcon className="size-4" /> {sortLabel}
+            </button>
           </div>
-
-          {isLoading ? (
-            <EmptyState icon={Inbox} title="Loading materials…" />
-          ) : error ? (
-            <EmptyState icon={Inbox} title="Couldn't load materials" description={error.message} />
-          ) : filteredMaterials.length === 0 ? (
-            <EmptyState
-              icon={Inbox}
-              title="No materials found"
-              description={
-                hasActiveFilters
-                  ? 'Try adjusting your search criteria or subject filters.'
-                  : 'Course materials will appear here once uploaded.'
-              }
+          <MaterialList materials={results} showSubject={!filters.subject} />
+          <div className="pt-4">
+            <DownloadAllButton
+              materials={results}
+              fileName={activeSubject ? `${activeSubject.code}-materials.zip` : undefined}
             />
-          ) : (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredMaterials.map((item) => (
-                  <MaterialCard key={item.id} item={item} />
-                ))}
-              </div>
-              <div className="flex justify-center pt-4">
-                <button
-                  type="button"
-                  onClick={downloadAll}
-                  disabled={isDownloadingAll}
-                  className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-medium text-white shadow-md shadow-indigo-600/20 transition-all hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {isDownloadingAll ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                  {isDownloadingAll ? 'Preparing ZIP...' : 'Download All'}
-                </button>
-              </div>
-            </>
+          </div>
+        </section>
+      )}
+
+      <Sheet
+        open={sheetOpen}
+        title="Filter and sort"
+        onClose={() => setSheetOpen(false)}
+        footer={
+          <>
+            <Button variant="ghost" className="flex-1" onClick={() => update({ type: '', lab: '' })}>
+              Reset
+            </Button>
+            <Button className="flex-1" onClick={() => setSheetOpen(false)}>
+              Show {results.length}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-6">
+          <fieldset className="space-y-2.5">
+            <legend className="mb-2.5 text-sm font-medium text-ink-2">Sort by</legend>
+            <ChipRow
+              label="Sort by"
+              wrap
+              options={SORT_OPTIONS}
+              value={filters.sort}
+              onChange={(sort) => update({ sort: sort as typeof filters.sort })}
+            />
+          </fieldset>
+          <fieldset>
+            <legend className="mb-2.5 text-sm font-medium text-ink-2">Type</legend>
+            <ChipRow
+              label="Type"
+              wrap
+              options={[{ value: '', label: 'Any type' }, ...FILE_KINDS]}
+              value={filters.type}
+              onChange={(type) => update({ type })}
+            />
+          </fieldset>
+          {labOptions.length > 0 && (
+            <fieldset>
+              <legend className="mb-2.5 text-sm font-medium text-ink-2">
+                Section of {activeSubject?.code}
+              </legend>
+              <ChipRow label="Section" wrap options={labOptions} value={filters.lab} onChange={(lab) => update({ lab })} />
+            </fieldset>
           )}
         </div>
-      </div>
+      </Sheet>
     </div>
   )
 }
 
 export default function MaterialsPage() {
   return (
-    <Suspense fallback={<div className="text-sm text-gray-500 dark:text-gray-400 p-8 text-center">Loading materials...</div>}>
-      <MaterialsContent />
+    <Suspense fallback={<MaterialListSkeleton />}>
+      <Library />
     </Suspense>
   )
 }

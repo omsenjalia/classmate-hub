@@ -1,160 +1,78 @@
 'use client'
 
 import { useState } from 'react'
-import { Profile, UserRole } from '@/lib/types'
-import { Users, ShieldCheck, Search } from 'lucide-react'
+import Link from 'next/link'
+import { ShieldCheckIcon, UsersIcon } from '@phosphor-icons/react/dist/ssr'
 import toast from 'react-hot-toast'
+import { useAppStore } from '@/store/useAppStore'
+import { useAsyncData } from '@/hooks/useAsyncData'
+import { createClient } from '@/lib/supabase/client'
+import { isSupabaseConfigured } from '@/lib/supabase/config'
+import { displayName } from '@/lib/utils'
+import type { Profile, UserRole } from '@/lib/types'
+import Avatar from '@/components/ui/Avatar'
+import EmptyState from '@/components/ui/EmptyState'
+import { Button } from '@/components/ui/Button'
+import { SearchField } from '@/components/materials/LibraryControls'
+import { MaterialListSkeleton } from '@/components/materials/MaterialList'
 
-const INITIAL_PROFILES: Profile[] = [
-  {
-    id: 'user-demo-admin-1',
-    username: 'alex_dev',
-    display_name: 'Alex Rivera',
-    avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-    bio: 'IT Class Representative',
-    role: 'admin',
-    created_at: '2026-08-01T10:00:00Z',
-  },
-  {
-    id: 'user-2',
-    username: 'priya_m',
-    display_name: 'Priya Mehta',
-    avatar_url: null,
-    bio: 'Software enthusiast',
-    role: 'student',
-    created_at: '2026-08-03T12:30:00Z',
-  },
-  {
-    id: 'user-3',
-    username: 'rohan_s',
-    display_name: 'Rohan Sharma',
-    avatar_url: null,
-    bio: null,
-    role: 'student',
-    created_at: '2026-08-05T15:45:00Z',
-  },
-  {
-    id: 'user-4',
-    username: 'ananya_k',
-    display_name: 'Ananya Kumar',
-    avatar_url: null,
-    bio: null,
-    role: 'student',
-    created_at: '2026-08-08T09:15:00Z',
-  },
-]
+async function fetchProfiles(): Promise<Profile[]> {
+  if (!isSupabaseConfigured()) return []
+  const { data } = await createClient().from('profiles').select('*').order('created_at', { ascending: true })
+  return (data || []) as Profile[]
+}
 
 export default function AdminUsersPage() {
-  const [profiles, setProfiles] = useState<Profile[]>(INITIAL_PROFILES)
-  const [search, setSearch] = useState('')
+  const me = useAppStore((state) => state.user)
+  const { data, setData, isLoading } = useAsyncData(fetchProfiles, [])
+  const [query, setQuery] = useState('')
+  const [savingId, setSavingId] = useState<string | null>(null)
 
-  const filteredProfiles = profiles.filter((p) => {
-    if (!search.trim()) return true
-    const q = search.toLowerCase()
-    return (
-      p.username.toLowerCase().includes(q) ||
-      p.display_name?.toLowerCase().includes(q)
-    )
+  const people = (data ?? []).filter((person) => {
+    const q = query.toLowerCase().trim()
+    return !q || person.username.toLowerCase().includes(q) || !!person.display_name?.toLowerCase().includes(q)
   })
 
-  const toggleRole = (userId: string) => {
-    setProfiles((prev) =>
-      prev.map((p) => {
-        if (p.id === userId) {
-          const newRole: UserRole = p.role === 'admin' ? 'student' : 'admin'
-          toast.success(`Updated role for @${p.username} to ${newRole.toUpperCase()}`)
-          return { ...p, role: newRole }
-        }
-        return p
-      })
-    )
+  const toggleRole = async (person: Profile) => {
+    const role: UserRole = person.role === 'admin' ? 'student' : 'admin'
+    setSavingId(person.id)
+    const { error } = await createClient().from('profiles').update({ role }).eq('id', person.id)
+    setSavingId(null)
+    if (error) return toast.error(error.message)
+    setData((current) => current?.map((row) => (row.id === person.id ? { ...row, role } : row)) ?? null)
+    toast.success(`@${person.username} is now ${role === 'admin' ? 'an admin' : 'a student'}`)
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-200 max-w-4xl">
-      <div>
-        <h1 className="text-2xl font-bold font-display text-white flex items-center gap-2">
-          <Users className="w-6 h-6 text-amber-400" /> Student & Role Directory
-        </h1>
-        <p className="text-sm text-[#8B91A8] mt-1">
-          Manage registered class accounts and grant or revoke administrator capabilities.
-        </p>
-      </div>
-
-      {/* Search Input */}
-      <div className="relative max-w-md">
-        <Search className="w-4 h-4 text-[#8B91A8] absolute left-3.5 top-1/2 -translate-y-1/2" />
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Filter students by username or name..."
-          className="w-full bg-[#1A1D27] border border-[#2D3148] rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-[#8B91A8]/60 focus:outline-none focus:border-[#4F6EF7]"
-        />
-      </div>
-
-      {/* Table */}
-      <div className="bg-[#1A1D27] border border-[#2D3148] rounded-2xl overflow-hidden shadow-xl">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs font-mono">
-            <thead>
-              <tr className="border-b border-[#2D3148] bg-[#0F1117] text-[#8B91A8]">
-                <th className="p-4 uppercase">Student</th>
-                <th className="p-4 uppercase">Username</th>
-                <th className="p-4 uppercase">Current Role</th>
-                <th className="p-4 uppercase text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#2D3148]/60 text-white">
-              {filteredProfiles.map((p) => (
-                <tr key={p.id} className="hover:bg-[#242736]/40 transition-colors">
-                  <td className="p-4 font-semibold flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-[#4F6EF7]/20 border border-[#4F6EF7]/40 flex items-center justify-center font-bold text-[#4F6EF7] overflow-hidden">
-                      {p.avatar_url ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={p.avatar_url} alt={p.username} className="w-full h-full object-cover" />
-                      ) : (
-                        p.username.charAt(0).toUpperCase()
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-bold text-white font-display text-sm">{p.display_name || p.username}</p>
-                      <p className="text-[10px] text-[#8B91A8] font-mono">{p.bio || 'Class Member'}</p>
-                    </div>
-                  </td>
-
-                  <td className="p-4 text-[#8B91A8]">@{p.username}</td>
-
-                  <td className="p-4">
-                    {p.role === 'admin' ? (
-                      <span className="inline-flex items-center gap-1 bg-amber-500/20 text-amber-300 font-mono px-2 py-0.5 rounded border border-amber-500/30">
-                        <ShieldCheck className="w-3 h-3" /> ADMIN
-                      </span>
-                    ) : (
-                      <span className="bg-[#0F1117] text-[#8B91A8] px-2 py-0.5 rounded border border-[#2D3148]">
-                        STUDENT
-                      </span>
-                    )}
-                  </td>
-
-                  <td className="p-4 text-right">
-                    <button
-                      onClick={() => toggleRole(p.id)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-colors border cursor-pointer ${
-                        p.role === 'admin'
-                          ? 'bg-red-500/10 text-red-400 border-red-500/30 hover:bg-red-500/20'
-                          : 'bg-[#4F6EF7]/15 text-[#4F6EF7] border-[#4F6EF7]/40 hover:bg-[#4F6EF7] hover:text-white'
-                      }`}
-                    >
-                      {p.role === 'admin' ? 'Demote to Student' : 'Promote to Admin'}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+    <div className="space-y-4">
+      <SearchField value={query} onChange={setQuery} placeholder="Find by name or username" />
+      {isLoading ? (
+        <MaterialListSkeleton rows={4} />
+      ) : people.length === 0 ? (
+        <EmptyState icon={UsersIcon} title={query ? 'No one matches' : 'No accounts yet'} />
+      ) : (
+        <ul className="overflow-hidden rounded-card border border-line bg-surface">
+          {people.map((person) => (
+            <li key={person.id} className="flex items-center gap-3 border-b border-line px-4 py-3 last:border-0">
+              <Link href={`/profile/${person.username}`} className="flex min-w-0 flex-1 items-center gap-3">
+                <Avatar profile={person} />
+                <span className="min-w-0">
+                  <span className="flex items-center gap-1.5 truncate text-[15px] font-medium">
+                    {displayName(person)}
+                    {person.role === 'admin' && <ShieldCheckIcon className="size-4 shrink-0 text-accent" weight="fill" aria-label="Admin" />}
+                  </span>
+                  <span className="block truncate text-[13px] text-muted">@{person.username}</span>
+                </span>
+              </Link>
+              {person.id !== me?.id && (
+                <Button variant="secondary" size="sm" onClick={() => toggleRole(person)} loading={savingId === person.id}>
+                  {person.role === 'admin' ? 'Remove admin' : 'Make admin'}
+                </Button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 }

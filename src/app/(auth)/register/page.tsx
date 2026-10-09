@@ -1,214 +1,169 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { isSupabaseConfigured } from '@/lib/supabase/config'
+import { ALLOWED_EMAIL_DOMAIN, isCollegeEmail, safeNextPath } from '@/lib/auth'
 import { useAppStore } from '@/store/useAppStore'
-import { User, Mail, Lock, UserCheck, ArrowRight, Loader2 } from 'lucide-react'
-import toast from 'react-hot-toast'
+import { Button } from '@/components/ui/Button'
+import Field from '@/components/ui/Field'
 
-const ALLOWED_EMAIL_DOMAIN = '@bvmengineering.ac.in'
+type Errors = Partial<Record<'username' | 'email' | 'password' | 'form', string>>
 
-function isSupabaseConfigured(): boolean {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-  return !!url && !url.includes('placeholder')
-}
-
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter()
+  const next = safeNextPath(useSearchParams().get('next'))
   const setUser = useAppStore((state) => state.setUser)
   const [username, setUsername] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [errors, setErrors] = useState<Errors>({})
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!username || !email || !password) {
-      toast.error('Please fill in all required fields')
-      return
-    }
+  const cleanUsername = username.toLowerCase().trim()
 
-    // Validate email domain
-    if (!email.toLowerCase().endsWith(ALLOWED_EMAIL_DOMAIN)) {
-      toast.error(`Only ${ALLOWED_EMAIL_DOMAIN} emails are allowed`)
-      return
-    }
+  const signInLocally = (id: string) => {
+    setUser({
+      id,
+      username: cleanUsername,
+      display_name: displayName.trim() || cleanUsername,
+      avatar_url: null,
+      bio: null,
+      role: 'student',
+      created_at: new Date().toISOString(),
+    })
+    router.push(next)
+  }
+
+  const handleRegister = async (event: React.FormEvent) => {
+    event.preventDefault()
+    const nextErrors: Errors = {}
+    if (!/^[a-z0-9_.]{3,24}$/.test(cleanUsername)) nextErrors.username = '3 to 24 characters: letters, numbers, dots or underscores.'
+    if (!isCollegeEmail(email)) nextErrors.email = `Use your ${ALLOWED_EMAIL_DOMAIN} address.`
+    if (password.length < 6) nextErrors.password = 'At least 6 characters.'
+    setErrors(nextErrors)
+    if (Object.keys(nextErrors).length) return
 
     setLoading(true)
-
-    // Helper: create a local/offline session
-    const localRegister = () => {
-      setUser({
-        id: 'user-' + Date.now(),
-        username: username.toLowerCase().trim(),
-        display_name: displayName || username,
-        avatar_url: null,
-        bio: null,
-        role: 'student',
-        created_at: new Date().toISOString(),
-      })
-      toast.success('Account created successfully!')
-      router.push('/dashboard')
-    }
-
-    // If Supabase is not configured, skip it entirely — prevents broken cookie writes
     if (!isSupabaseConfigured()) {
-      localRegister()
+      signInLocally('user-' + Date.now())
       setLoading(false)
       return
     }
 
     try {
-      const supabase = createClient()
-      // Use NEXT_PUBLIC_SITE_URL (set in Vercel env vars) so verification
-      // emails always link back to the production URL instead of localhost.
-      const siteUrl =
-        process.env.NEXT_PUBLIC_SITE_URL ||
-        (typeof window !== 'undefined' ? window.location.origin : '')
-
-      const { data, error } = await supabase.auth.signUp({
-        email,
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin
+      const { data, error } = await createClient().auth.signUp({
+        email: email.trim(),
         password,
         options: {
-          emailRedirectTo: `${siteUrl}/dashboard`,
-          data: {
-            username: username.toLowerCase().trim(),
-            display_name: displayName || username,
-          },
+          emailRedirectTo: `${siteUrl}/materials`,
+          data: { username: cleanUsername, display_name: displayName.trim() || cleanUsername },
         },
       })
-
       if (error) {
-        toast.error(error.message || 'Registration failed')
+        setErrors({ form: error.message || 'Registration failed. Try again.' })
         return
       }
-
-      if (data.user) {
-        setUser({
-          id: data.user.id,
-          username: username.toLowerCase().trim(),
-          display_name: displayName || username,
-          avatar_url: null,
-          bio: null,
-          role: 'student',
-          created_at: new Date().toISOString(),
-        })
-      } else {
-        localRegister()
-        return
-      }
-      toast.success('Registration successful! Welcome to ClassmateHub.')
-      router.push('/dashboard')
+      signInLocally(data.user?.id ?? 'user-' + Date.now())
     } catch {
-      // Network error — fall back to local session
-      localRegister()
+      signInLocally('user-' + Date.now())
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 sm:p-8 shadow-xl">
-      <div className="mb-6">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white">Create Student Account</h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Join your BVM IT Classmates community.</p>
+    <div className="animate-rise space-y-8">
+      <div>
+        <h1 className="text-[28px] font-semibold leading-tight">Create your account</h1>
+        <p className="mt-1.5 text-[15px] text-muted">One account for every subject&apos;s notes, labs and code.</p>
       </div>
 
-      <form onSubmit={handleRegister} className="space-y-4">
-        <div>
-          <label className="block text-xs font-mono font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-            Username *
-          </label>
-          <div className="relative">
-            <User className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+      <form onSubmit={handleRegister} noValidate className="space-y-5">
+        <Field label="Username" error={errors.username} hint="Shown next to what you upload">
+          {(props) => (
             <input
-              type="text"
-              required
+              {...props}
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="e.g. rahul_shah"
-              className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-600 rounded-lg pl-10 pr-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-400 transition-colors"
+              onChange={(event) => setUsername(event.target.value)}
+              placeholder="rahul_shah"
+              autoCapitalize="none"
+              autoCorrect="off"
+              autoComplete="username"
+              className="field"
             />
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-xs font-mono font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-            Display Name
-          </label>
-          <div className="relative">
-            <UserCheck className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="Rahul Shah"
-              className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-600 rounded-lg pl-10 pr-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-400 transition-colors"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-xs font-mono font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-            Email Address *
-          </label>
-          <div className="relative">
-            <Mail className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="yourname@bvmengineering.ac.in"
-              className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-600 rounded-lg pl-10 pr-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-400 transition-colors"
-            />
-          </div>
-          <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1.5 font-mono">
-            Only @bvmengineering.ac.in emails are accepted
-          </p>
-        </div>
-
-        <div>
-          <label className="block text-xs font-mono font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-            Password *
-          </label>
-          <div className="relative">
-            <Lock className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="At least 6 characters"
-              className="w-full bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-600 rounded-lg pl-10 pr-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-500 dark:focus:border-indigo-400 transition-colors"
-            />
-          </div>
-        </div>
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-lg text-sm flex items-center justify-center gap-2 transition-all shadow-md shadow-indigo-600/20 disabled:opacity-50 cursor-pointer"
-        >
-          {loading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <>
-              Create Account <ArrowRight className="w-4 h-4" />
-            </>
           )}
-        </button>
+        </Field>
+        <Field label="Display name" optional>
+          {(props) => (
+            <input
+              {...props}
+              value={displayName}
+              onChange={(event) => setDisplayName(event.target.value)}
+              placeholder="Rahul Shah"
+              autoComplete="name"
+              className="field"
+            />
+          )}
+        </Field>
+        <Field label="College email" error={errors.email}>
+          {(props) => (
+            <input
+              {...props}
+              type="email"
+              inputMode="email"
+              autoCapitalize="none"
+              autoComplete="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder={`yourname${ALLOWED_EMAIL_DOMAIN}`}
+              className="field"
+            />
+          )}
+        </Field>
+        <Field label="Password" error={errors.password}>
+          {(props) => (
+            <input
+              {...props}
+              type="password"
+              autoComplete="new-password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="At least 6 characters"
+              className="field"
+            />
+          )}
+        </Field>
+
+        {errors.form && (
+          <p role="alert" className="rounded-tile bg-danger-soft px-3.5 py-2.5 text-sm text-danger">
+            {errors.form}
+          </p>
+        )}
+
+        <Button type="submit" size="lg" className="w-full" loading={loading}>
+          Create account
+        </Button>
       </form>
 
-      <div className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
-        Already have an account?{' '}
-        <Link href="/login" className="text-indigo-600 dark:text-indigo-400 hover:underline font-medium">
+      <p className="text-center text-sm text-muted">
+        Already have one?{' '}
+        <Link href="/login" className="font-medium text-accent hover:underline">
           Sign in
         </Link>
-      </div>
+      </p>
     </div>
+  )
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense>
+      <RegisterForm />
+    </Suspense>
   )
 }

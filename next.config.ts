@@ -17,6 +17,22 @@ const nextConfig: NextConfig = {
     // contains another lockfile.
     root: process.cwd(),
   },
+  // The app is materials-only now; old feature URLs land in the library.
+  async redirects() {
+    return [
+      { source: "/", destination: "/materials", permanent: false },
+      ...["/dashboard", "/polls", "/events", "/deadlines"].map((source) => ({
+        source,
+        destination: "/materials",
+        permanent: true,
+      })),
+      ...["/admin", "/admin/dashboard", "/admin/announcements", "/admin/moderation", "/admin/audit"].map((source) => ({
+        source,
+        destination: "/admin/materials",
+        permanent: false,
+      })),
+    ];
+  },
 };
 
 export default nextConfig;
