@@ -6,6 +6,7 @@ import { useAppStore } from '@/store/useAppStore'
 import { useMaterials } from '@/hooks/useMaterials'
 import { sortMaterials } from '@/hooks/useMaterialFilters'
 import { SYLLABUS_PDFS } from '@/lib/constants'
+import { labChipOptions } from '@/lib/utils'
 import PageHeader from '@/components/layout/PageHeader'
 import EmptyState from '@/components/ui/EmptyState'
 import { ButtonLink } from '@/components/ui/Button'
@@ -37,7 +38,7 @@ export default function SubjectPage({ params }: { params: Promise<{ id: string }
   const sectionOptions = [
     { value: '', label: `All ${subjectMaterials.length}` },
     { value: 'lecture', label: 'Lecture notes' },
-    ...subjectLabs.map((lab) => ({ value: lab.id, label: lab.name })),
+    ...labChipOptions(subjectLabs),
   ]
 
   if (subjectsLoaded && !subject) {

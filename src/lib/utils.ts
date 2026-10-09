@@ -121,3 +121,19 @@ export function initials(name: string) {
     .map((part) => part[0]!.toUpperCase())
     .join('')
 }
+
+/** "Lab 6 — Pointers & Dynamic Memory" becomes "Lab 6" for tight spaces. */
+export function shortLabName(name: string): string {
+  const short = name.split(/\s+[—–-]\s+|:\s+/)[0]?.trim()
+  return short || name
+}
+
+/** Short labels for a set of labs, keeping full names where short ones would collide. */
+export function labChipOptions(labs: { id: string; name: string }[]) {
+  const counts = new Map<string, number>()
+  for (const lab of labs) counts.set(shortLabName(lab.name), (counts.get(shortLabName(lab.name)) || 0) + 1)
+  return labs.map((lab) => {
+    const short = shortLabName(lab.name)
+    return { value: lab.id, label: counts.get(short)! > 1 ? lab.name : short, title: lab.name }
+  })
+}

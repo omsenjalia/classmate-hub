@@ -5,7 +5,7 @@ import { ArrowsDownUpIcon, BooksIcon, MagnifyingGlassIcon, WarningIcon } from '@
 import { useAppStore } from '@/store/useAppStore'
 import { useMaterials } from '@/hooks/useMaterials'
 import { SORT_OPTIONS, useMaterialFilters } from '@/hooks/useMaterialFilters'
-import { FILE_KINDS } from '@/lib/utils'
+import { FILE_KINDS, labChipOptions } from '@/lib/utils'
 import PageHeader from '@/components/layout/PageHeader'
 import Sheet from '@/components/ui/Sheet'
 import EmptyState from '@/components/ui/EmptyState'
@@ -34,7 +34,7 @@ function Library() {
     return [
       { value: '', label: 'Everything' },
       { value: 'lecture', label: 'Lecture notes' },
-      ...subjectLabs.map((lab) => ({ value: lab.id, label: lab.name })),
+      ...labChipOptions(subjectLabs),
     ]
   }, [labs, filters.subject])
 

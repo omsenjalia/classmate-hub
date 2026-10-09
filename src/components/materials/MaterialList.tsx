@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { CaretRightIcon } from '@phosphor-icons/react/dist/ssr'
 import FileTile from '@/components/materials/FileTile'
-import { cn, formatBytes, formatShortDate } from '@/lib/utils'
+import { cn, formatBytes, formatShortDate, shortLabName } from '@/lib/utils'
 import type { Material } from '@/lib/types'
 
 interface MaterialListProps {
@@ -31,7 +31,7 @@ export function MaterialRow({ item, showSubject = true }: { item: Material; show
   type MetaPart = { key: string; text: string; mono?: boolean; shrink?: boolean }
   const parts: (MetaPart | null)[] = [
     showSubject && item.subjects ? { key: 'subject', text: item.subjects.code, mono: true } : null,
-    item.labs ? { key: 'lab', text: item.labs.name, shrink: true } : null,
+    item.labs ? { key: 'lab', text: shortLabName(item.labs.name), shrink: true } : null,
     item.file_size_bytes
       ? { key: 'size', text: formatBytes(item.file_size_bytes) }
       : item.video_url
