@@ -1,20 +1,22 @@
-import type { LucideIcon } from 'lucide-react'
+import type { Icon } from '@phosphor-icons/react'
 
 interface EmptyStateProps {
-  icon: LucideIcon
+  icon: Icon
   title: string
   description?: string
+  action?: React.ReactNode
 }
 
-/** Centered placeholder card shown when a list has nothing to render. */
-export default function EmptyState({ icon: Icon, title, description }: EmptyStateProps) {
+/** Quiet placeholder for empty lists, errors and gated pages. */
+export default function EmptyState({ icon: IconComponent, title, description, action }: EmptyStateProps) {
   return (
-    <div className="bg-white dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-2xl p-12 text-center space-y-3">
-      <Icon className="w-10 h-10 text-gray-400 dark:text-gray-500 mx-auto" />
-      <h3 className="text-base font-bold text-gray-900 dark:text-white">{title}</h3>
-      {description && (
-        <p className="text-sm text-gray-500 dark:text-gray-400">{description}</p>
-      )}
+    <div className="animate-rise flex flex-col items-center px-6 py-14 text-center">
+      <div className="mb-4 flex size-14 items-center justify-center rounded-card bg-surface-2 text-muted">
+        <IconComponent className="size-7" weight="duotone" />
+      </div>
+      <h2 className="text-base font-semibold">{title}</h2>
+      {description && <p className="mt-1.5 max-w-xs text-sm leading-relaxed text-muted">{description}</p>}
+      {action && <div className="mt-5">{action}</div>}
     </div>
   )
 }

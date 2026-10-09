@@ -1,7 +1,5 @@
-import Sidebar from '@/components/layout/Sidebar'
-import Topbar from '@/components/layout/Topbar'
-import MobileNav from '@/components/layout/MobileNav'
-import BottomNav from '@/components/layout/BottomNav'
+import TabBar from '@/components/layout/TabBar'
+import DesktopNav from '@/components/layout/DesktopNav'
 import AppDataProvider from '@/components/layout/AppDataProvider'
 
 export default function MainLayout({
@@ -11,24 +9,20 @@ export default function MainLayout({
 }) {
   return (
     <AppDataProvider>
-      <div className="editorial-grid flex h-screen bg-page overflow-hidden">
-      {/* Desktop Sidebar */}
-      <Sidebar className="hidden md:flex shrink-0" />
-
-      {/* Mobile Drawer */}
-      <MobileNav />
-
-      {/* Main View */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <Topbar />
-        <main className="editorial-noise relative flex-1 min-h-0 overflow-y-auto px-4 py-5 sm:p-6 lg:p-8 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-8 max-w-7xl w-full mx-auto">
-          {children}
-        </main>
-      </div>
-
-      {/* Mobile Bottom Nav */}
-      <BottomNav />
-      </div>
+      <a
+        href="#content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-tile focus:bg-surface focus:px-4 focus:py-2"
+      >
+        Skip to content
+      </a>
+      <DesktopNav />
+      <main
+        id="content"
+        className="mx-auto w-full max-w-5xl px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:px-6 md:pb-16"
+      >
+        {children}
+      </main>
+      <TabBar />
     </AppDataProvider>
   )
 }

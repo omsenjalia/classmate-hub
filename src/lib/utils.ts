@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
-import { format, formatDistanceToNow, isBefore } from 'date-fns'
+import { format, formatDistanceToNowStrict, differenceInDays } from 'date-fns'
+import type { Material } from '@/lib/types'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -18,114 +19,105 @@ export function formatBytes(bytes: number | null | undefined, decimals = 1): str
 export function formatDate(dateString: string | null | undefined): string {
   if (!dateString) return ''
   try {
-    return format(new Date(dateString), 'MMM d, yyyy')
+    return format(new Date(dateString), 'd MMM yyyy')
   } catch {
     return dateString
   }
 }
 
-export function formatDateTime(dateString: string | null | undefined): string {
+/** "3d ago" for the last two weeks, a plain date after that. */
+export function formatShortDate(dateString: string | null | undefined): string {
   if (!dateString) return ''
   try {
-    return format(new Date(dateString), 'MMM d, yyyy • h:mm a')
+    const date = new Date(dateString)
+    if (differenceInDays(new Date(), date) < 14) {
+      return formatDistanceToNowStrict(date, { addSuffix: true })
+    }
+    return format(date, 'd MMM')
   } catch {
     return dateString
   }
 }
 
-export function formatRelativeTime(dateString: string | null | undefined): string {
-  if (!dateString) return ''
-  try {
-    return formatDistanceToNow(new Date(dateString), { addSuffix: true })
-  } catch {
-    return dateString
-  }
-}
+export type FileKind = 'pdf' | 'code' | 'video' | 'zip' | 'docx' | 'image' | 'file'
 
-export function getDeadlineUrgency(dueDateString: string): {
-  label: string
-  color: string
-  border: string
-  bg: string
-} {
-  try {
-    const due = new Date(dueDateString)
-    const now = new Date()
-
-    if (isBefore(due, now)) {
-      return {
-        label: 'Overdue',
-        color: 'text-red-500 dark:text-red-400',
-        border: 'border-red-200 dark:border-red-500/30',
-        bg: 'bg-red-50 dark:bg-red-500/10',
-      }
-    }
-
-    const diffHours = (due.getTime() - now.getTime()) / (1000 * 3600)
-    if (diffHours <= 72) {
-      return {
-        label: 'Due Soon',
-        color: 'text-amber-600 dark:text-amber-400',
-        border: 'border-amber-200 dark:border-amber-500/30',
-        bg: 'bg-amber-50 dark:bg-amber-500/10',
-      }
-    }
-
-    return {
-      label: 'Upcoming',
-      color: 'text-emerald-600 dark:text-emerald-400',
-      border: 'border-emerald-200 dark:border-emerald-500/30',
-      bg: 'bg-emerald-50 dark:bg-emerald-500/10',
-    }
-  } catch {
-    return {
-      label: 'Upcoming',
-      color: 'text-emerald-600 dark:text-emerald-400',
-      border: 'border-emerald-200 dark:border-emerald-500/30',
-      bg: 'bg-emerald-50 dark:bg-emerald-500/10',
-    }
-  }
-}
-
-const SUBJECT_COLORS = [
-  'bg-blue-50 dark:bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/30',
-  'bg-purple-50 dark:bg-purple-500/15 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-500/30',
-  'bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/30',
-  'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30',
-  'bg-cyan-50 dark:bg-cyan-500/15 text-cyan-700 dark:text-cyan-400 border-cyan-200 dark:border-cyan-500/30',
-  'bg-rose-50 dark:bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-500/30',
-  'bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-500/30',
-  'bg-teal-50 dark:bg-teal-500/15 text-teal-700 dark:text-teal-400 border-teal-200 dark:border-teal-500/30',
+export const FILE_KINDS: { value: FileKind; label: string }[] = [
+  { value: 'pdf', label: 'PDFs' },
+  { value: 'code', label: 'Code' },
+  { value: 'video', label: 'Videos' },
+  { value: 'docx', label: 'Docs' },
+  { value: 'image', label: 'Images' },
+  { value: 'zip', label: 'Archives' },
 ]
 
-export function getSubjectColor(code: string = ''): string {
-  let hash = 0
-  for (let i = 0; i < code.length; i++) {
-    hash = code.charCodeAt(i) + ((hash << 5) - hash)
+export function getFileKind(material: Pick<Material, 'file_type' | 'video_url'>): FileKind {
+  if (material.video_url) return 'video'
+  switch (material.file_type) {
+    case 'pdf':
+    case 'code':
+    case 'video':
+    case 'zip':
+    case 'docx':
+    case 'image':
+      return material.file_type
+    default:
+      return 'file'
   }
-  const index = Math.abs(hash) % SUBJECT_COLORS.length
-  return SUBJECT_COLORS[index]
 }
 
-/** Map file type to display info */
-export function getFileTypeInfo(fileType?: string | null): {
-  label: string
-  colorClass: string
-} {
-  switch (fileType) {
+export function getFileKindLabel(kind: FileKind): string {
+  switch (kind) {
     case 'pdf':
-      return { label: 'PDF', colorClass: 'text-red-500 dark:text-red-400' }
+      return 'PDF'
     case 'code':
-      return { label: 'Code', colorClass: 'text-blue-500 dark:text-blue-400' }
+      return 'Code'
     case 'video':
-      return { label: 'Video', colorClass: 'text-indigo-500 dark:text-indigo-400' }
+      return 'Video'
     case 'zip':
-      return { label: 'Archive', colorClass: 'text-emerald-500 dark:text-emerald-400' }
+      return 'Archive'
     case 'docx':
-      return { label: 'Document', colorClass: 'text-blue-500 dark:text-blue-400' }
+      return 'Document'
     case 'image':
-      return { label: 'Image', colorClass: 'text-pink-500 dark:text-pink-400' }
+      return 'Image'
     default:
-      return { label: 'File', colorClass: 'text-gray-500 dark:text-gray-400' }
+      return 'File'
   }
+}
+
+/** Upper-cased extension for the file tile, e.g. "PY" or "PDF". */
+export function getExtension(material: Pick<Material, 'file_name' | 'file_type' | 'video_url'>): string {
+  if (material.video_url) return 'VID'
+  const ext = material.file_name?.split('.').pop()
+  if (ext && ext.length <= 4) return ext.toUpperCase()
+  return getFileKindLabel(getFileKind(material)).slice(0, 3).toUpperCase()
+}
+
+export function getFileTypeFromName(fileName: string): Exclude<FileKind, 'video' | 'file'> {
+  const extension = fileName.split('.').pop()?.toLowerCase() || ''
+  if (extension === 'pdf') return 'pdf'
+  if (['c', 'py', 'java', 'js', 'ts'].includes(extension)) return 'code'
+  if (['png', 'jpg', 'jpeg'].includes(extension)) return 'image'
+  if (['zip', 'rar'].includes(extension)) return 'zip'
+  return 'docx'
+}
+
+export function parseTags(input: string): string[] | null {
+  const tags = input
+    .split(',')
+    .map((tag) => tag.trim().toLowerCase())
+    .filter(Boolean)
+  return tags.length ? Array.from(new Set(tags)) : null
+}
+
+export function displayName(profile: { display_name?: string | null; username?: string } | null | undefined) {
+  return profile?.display_name || profile?.username || 'Classmate'
+}
+
+export function initials(name: string) {
+  return name
+    .split(/[\s_.-]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]!.toUpperCase())
+    .join('')
 }

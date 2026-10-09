@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { fetchLiveLabs } from '@/lib/supabase-data'
+import { fetchLiveLabs, MATERIAL_SELECT } from '@/lib/supabase-data'
 import { Lab, Material, MaterialVersion } from '@/lib/types'
 import { MAX_FILE_SIZE_BYTES, ALLOWED_FILE_EXTENSIONS } from '@/lib/constants'
 import { uploadFileInGithubChunks } from '@/lib/github-upload'
+import { deleteMaterial } from '@/lib/material-actions'
 import { useAppStore } from '@/store/useAppStore'
 
 export interface MaterialDraft {
@@ -34,7 +35,7 @@ export function useMaterialDetail(materialId: string) {
       try {
         const { data, error } = await createClient()
           .from('materials')
-          .select('*, profiles(*), subjects(*), labs(*)')
+          .select(MATERIAL_SELECT)
           .eq('id', materialId)
           .single()
 
@@ -110,12 +111,13 @@ export function useMaterialDetail(materialId: string) {
     [labs, material?.subject_id]
   )
 
-  /** Fire-and-forget counter bump plus navigation to the stored file. */
+  /** Fire-and-forget counter bump; the caller opens the file. */
   const registerDownload = () => {
-    setDownloadCount((prev) => prev + 1)
+    const next = downloadCount + 1
+    setDownloadCount(next)
     createClient()
       .from('materials')
-      .update({ download_count: downloadCount + 1 })
+      .update({ download_count: next })
       .eq('id', materialId)
       .then(() => {})
   }
@@ -131,22 +133,10 @@ export function useMaterialDetail(materialId: string) {
     return true
   }
 
-  /**
-   * Deletes through the server route when a stored file exists (it removes
-   * both object and metadata), otherwise straight from Supabase.
-   */
   const remove = async (): Promise<boolean> => {
+    if (!material) return false
     try {
-      if (material?.file_key) {
-        const response = await fetch(`/api/upload/${material.file_key}`, { method: 'DELETE' })
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}))
-          throw new Error(errorData.error || 'Failed to delete the stored file')
-        }
-      } else {
-        const { error } = await createClient().from('materials').delete().eq('id', materialId)
-        if (error) throw new Error(error.message)
-      }
+      await deleteMaterial(material)
       return true
     } catch {
       return false
@@ -158,7 +148,7 @@ export function useMaterialDetail(materialId: string) {
       .from('materials')
       .update(draft)
       .eq('id', materialId)
-      .select('*, profiles(*), subjects(*), labs(*)')
+      .select(MATERIAL_SELECT)
       .single()
 
     if (error || !data) return false
@@ -210,7 +200,7 @@ export function useMaterialDetail(materialId: string) {
           file_type: material.file_type,
         })
         .eq('id', material.id)
-        .select('*, profiles(*), subjects(*), labs(*)')
+        .select(MATERIAL_SELECT)
         .single()
       if (error || !data) throw new Error(error?.message || 'Could not update material file')
 
@@ -248,6 +238,7 @@ export function useMaterialDetail(materialId: string) {
     bookmarked,
     versions,
     availableLabs,
+    labs,
     canManage,
     registerDownload,
     toggleBookmark,

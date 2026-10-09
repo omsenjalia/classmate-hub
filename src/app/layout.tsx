@@ -1,28 +1,45 @@
-import type { Metadata } from 'next'
-import { DM_Sans, JetBrains_Mono } from 'next/font/google'
+import type { Metadata, Viewport } from 'next'
+import { Geist, Geist_Mono } from 'next/font/google'
 import { Toaster } from 'react-hot-toast'
 import { Analytics } from '@vercel/analytics/next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import './globals.css'
 import ServiceWorkerRegistration from '@/components/layout/ServiceWorkerRegistration'
 
-const dmSans = DM_Sans({
+const geistSans = Geist({
   subsets: ['latin'],
-  variable: '--font-dm-sans',
+  variable: '--font-geist-sans',
   display: 'swap',
 })
 
-const jetbrainsMono = JetBrains_Mono({
+const geistMono = Geist_Mono({
   subsets: ['latin'],
-  variable: '--font-jetbrains-mono',
+  variable: '--font-geist-mono',
   display: 'swap',
 })
-
 
 export const metadata: Metadata = {
-  title: 'ClassmateHub — BVM IT Department',
+  title: {
+    default: 'ClassmateHub',
+    template: '%s · ClassmateHub',
+  },
   description:
-    'Class platform for course materials, lab guides, deadlines, and polls for BVM Engineering IT students.',
+    'Lecture notes, lab manuals, solution code and recorded lectures for BVM Engineering IT students.',
+  appleWebApp: {
+    capable: true,
+    title: 'ClassmateHub',
+    statusBarStyle: 'default',
+  },
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#f5f4ef' },
+    { media: '(prefers-color-scheme: dark)', color: '#121311' },
+  ],
 }
 
 export default function RootLayout({
@@ -31,18 +48,20 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html
-      lang="en"
-      className={`${dmSans.variable} ${jetbrainsMono.variable} dark`}
-      suppressHydrationWarning
-    >
-      <body className="antialiased min-h-screen bg-page text-primary">
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
+      <body className="min-h-dvh bg-bg text-ink antialiased">
         <Toaster
-          position="top-right"
+          position="top-center"
+          containerStyle={{ top: 'calc(env(safe-area-inset-top) + 12px)' }}
           toastOptions={{
-            duration: 3500,
-            className:
-              '!bg-white dark:!bg-[hsl(225,16%,11%)] !text-gray-900 dark:!text-gray-100 !border !border-gray-200 dark:!border-[hsl(228,18%,22%)] !rounded-xl !text-sm !shadow-lg',
+            duration: 3000,
+            style: {
+              background: 'var(--ink)',
+              color: 'var(--bg)',
+              borderRadius: '12px',
+              fontSize: '14px',
+              padding: '10px 14px',
+            },
           }}
         />
         <ServiceWorkerRegistration />
