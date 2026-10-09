@@ -231,9 +231,9 @@ export default function MaterialDetailPage({ params }: { params: Promise<{ id: s
         )}
       </div>
 
-      <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-card border border-line bg-line sm:grid-cols-4">
+      <dl className={`grid grid-cols-2 gap-px overflow-hidden rounded-card border border-line bg-line ${facts.length === 4 ? 'sm:grid-cols-4' : 'sm:grid-cols-3'}`}>
         {facts.map((fact) => (
-          <div key={fact.label} className="bg-surface px-4 py-3">
+          <div key={fact.label} className="bg-surface px-4 py-3 [&:last-child:nth-child(odd)]:col-span-2 sm:[&:last-child:nth-child(odd)]:col-span-1">
             <dt className="text-xs text-muted">{fact.label}</dt>
             <dd className="mt-0.5 text-[15px] font-medium tabular-nums">{fact.value}</dd>
           </div>

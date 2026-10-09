@@ -1,23 +1,23 @@
 import {
-  FileCodeIcon,
-  FileDocIcon,
+  ArticleIcon,
+  CodeIcon,
   FileIcon,
-  FileImageIcon,
-  FilePdfIcon,
-  FileVideoIcon,
+  FileTextIcon,
   FileZipIcon,
+  ImageIcon,
+  PlayCircleIcon,
 } from '@phosphor-icons/react/dist/ssr'
 import type { Icon } from '@phosphor-icons/react'
 import { cn, getExtension, getFileKind, type FileKind } from '@/lib/utils'
 import type { Material } from '@/lib/types'
 
 const ICONS: Record<FileKind, Icon> = {
-  pdf: FilePdfIcon,
-  code: FileCodeIcon,
-  video: FileVideoIcon,
+  pdf: FileTextIcon,
+  code: CodeIcon,
+  video: PlayCircleIcon,
   zip: FileZipIcon,
-  docx: FileDocIcon,
-  image: FileImageIcon,
+  docx: ArticleIcon,
+  image: ImageIcon,
   file: FileIcon,
 }
 

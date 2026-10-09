@@ -28,12 +28,18 @@ export default function MaterialList({ materials, showSubject = true }: Material
 }
 
 export function MaterialRow({ item, showSubject = true }: { item: Material; showSubject?: boolean }) {
-  const meta = [
-    showSubject && item.subjects?.code,
-    item.labs?.name,
-    item.file_size_bytes ? formatBytes(item.file_size_bytes) : item.video_url ? 'Video link' : null,
-    formatShortDate(item.created_at),
-  ].filter(Boolean)
+  type MetaPart = { key: string; text: string; mono?: boolean; shrink?: boolean }
+  const parts: (MetaPart | null)[] = [
+    showSubject && item.subjects ? { key: 'subject', text: item.subjects.code, mono: true } : null,
+    item.labs ? { key: 'lab', text: item.labs.name, shrink: true } : null,
+    item.file_size_bytes
+      ? { key: 'size', text: formatBytes(item.file_size_bytes) }
+      : item.video_url
+        ? { key: 'size', text: 'Video' }
+        : null,
+    { key: 'date', text: formatShortDate(item.created_at) },
+  ]
+  const meta = parts.filter((part): part is MetaPart => part !== null)
 
   return (
     <Link
@@ -44,16 +50,17 @@ export function MaterialRow({ item, showSubject = true }: { item: Material; show
       <span className="flex min-w-0 flex-1 items-center gap-2 border-b border-line py-3.5 pr-3 group-last/row:border-b-0">
         <span className="min-w-0 flex-1">
           <span className="line-clamp-2 text-[15px] font-medium leading-snug">{item.title}</span>
-          <span className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] text-muted">
+          <span className="mt-1 flex items-center gap-2 overflow-hidden whitespace-nowrap text-[13px] text-muted">
             {meta.map((part, i) => (
               <span
-                key={i}
+                key={part.key}
                 className={cn(
+                  part.shrink ? 'min-w-0 truncate' : 'shrink-0',
                   i > 0 && 'before:mr-2 before:inline-block before:h-2.5 before:w-px before:bg-line-strong before:align-[-1px]',
-                  i === 0 && showSubject && item.subjects && 'font-mono text-[12px] font-medium text-ink-2'
+                  part.mono && 'font-mono text-[12px] font-medium text-ink-2'
                 )}
               >
-                {part}
+                {part.text}
               </span>
             ))}
           </span>

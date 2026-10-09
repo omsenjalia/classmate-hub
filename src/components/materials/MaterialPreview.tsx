@@ -1,11 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { ArrowSquareOutIcon, FilePdfIcon } from '@phosphor-icons/react/dist/ssr'
 import { getFileKind } from '@/lib/utils'
 import type { Material } from '@/lib/types'
 
 const MAX_CODE_PREVIEW_BYTES = 256 * 1024
+const MAX_CODE_PREVIEW_LINES = 400
 
 export function getVideoEmbedUrl(url: string): string | null {
   const youtube = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|shorts\/|watch\?v=|watch\?.+&v=))([\w-]{11})/)
@@ -23,7 +23,11 @@ function CodePreview({ material }: { material: Material }) {
     let cancelled = false
     fetch(material.file_url)
       .then((response) => (response.ok ? response.text() : Promise.reject(new Error('fetch failed'))))
-      .then((text) => !cancelled && setState({ text, failed: false }))
+      .then((text) => {
+        if (cancelled) return
+        // A NUL byte means this isn't really text; don't dump it on screen.
+        setState(text.includes(String.fromCharCode(0)) ? { text: null, failed: true } : { text, failed: false })
+      })
       .catch(() => !cancelled && setState({ text: null, failed: true }))
     return () => {
       cancelled = true
@@ -33,12 +37,13 @@ function CodePreview({ material }: { material: Material }) {
   if (state.failed) return null
   if (state.text === null) return <div className="skeleton h-48 rounded-card" aria-label="Loading code preview" />
 
-  const lines = state.text.replace(/\n$/, '').split('\n')
+  const allLines = state.text.replace(/\n$/, '').split('\n')
+  const lines = allLines.slice(0, MAX_CODE_PREVIEW_LINES)
   return (
     <figure className="overflow-hidden rounded-card border border-line bg-surface">
       <figcaption className="border-b border-line px-4 py-2.5 font-mono text-xs text-muted">
         {material.file_name}
-        <span className="float-right">{lines.length} lines</span>
+        <span className="float-right">{allLines.length} lines</span>
       </figcaption>
       <pre className="max-h-[60dvh] overflow-auto py-3 font-mono text-[12.5px] leading-relaxed">
         <code className="table min-w-full">
@@ -50,6 +55,11 @@ function CodePreview({ material }: { material: Material }) {
           ))}
         </code>
       </pre>
+      {allLines.length > lines.length && (
+        <p className="border-t border-line px-4 py-2.5 text-xs text-muted">
+          Showing the first {lines.length} lines. Download the file to see the rest.
+        </p>
+      )}
     </figure>
   )
 }
@@ -92,30 +102,13 @@ export default function MaterialPreview({ material }: { material: Material }) {
   }
 
   if (kind === 'pdf') {
+    // Phones render embedded PDFs badly; there the sticky Open button hands off to the system viewer.
     return (
-      <>
-        {/* Mobile browsers render embedded PDFs badly, so phones get a tap-through card. */}
-        <a
-          href={material.file_url}
-          target="_blank"
-          rel="noreferrer"
-          className="pressable flex items-center gap-4 rounded-card border border-line bg-surface p-4 md:hidden"
-        >
-          <span className="flex size-12 items-center justify-center rounded-tile bg-accent-soft text-accent-soft-ink">
-            <FilePdfIcon className="size-6" weight="duotone" />
-          </span>
-          <span className="flex-1">
-            <span className="block text-[15px] font-medium">Read in your PDF viewer</span>
-            <span className="block text-sm text-muted">Opens full screen with zoom and search</span>
-          </span>
-          <ArrowSquareOutIcon className="size-5 text-muted" />
-        </a>
-        <iframe
-          src={material.file_url}
-          title={material.title}
-          className="hidden h-[78vh] w-full rounded-card border border-line bg-surface md:block"
-        />
-      </>
+      <iframe
+        src={material.file_url}
+        title={material.title}
+        className="hidden h-[78vh] w-full rounded-card border border-line bg-surface md:block"
+      />
     )
   }
 

@@ -46,13 +46,13 @@ export default function SubjectsPage() {
         <EmptyState icon={SquaresFourIcon} title="No subjects yet" description="An admin adds subjects for each semester. Check back soon." />
       ) : (
         semesters.map(([semester, list]) => (
-          <section key={semester} aria-labelledby={`sem-${semester}`} className="space-y-2.5">
+          <section key={semester} aria-labelledby={semesters.length > 1 ? `sem-${semester}` : undefined} className="space-y-2.5">
             {semesters.length > 1 && (
               <h2 id={`sem-${semester}`} className="text-sm font-semibold text-ink-2">
                 Semester {semester}
               </h2>
             )}
-            <ul className="grid gap-2 sm:grid-cols-2">
+            <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               {list.map((subject, index) => {
                 const count = counts.get(subject.id) || 0
                 const sections = labCount(subject.id)
