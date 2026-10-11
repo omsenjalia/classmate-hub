@@ -172,6 +172,65 @@ async function downloadGithubPath(path: string): Promise<Buffer> {
   return Buffer.from(await response.arrayBuffer())
 }
 
+async function fetchGithubRaw(path: string): Promise<Response> {
+  const { owner, repo, branch, token } = getGithubStorageConfig()
+  const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${branch}`, {
+    headers: { Accept: 'application/vnd.github.raw', Authorization: `Bearer ${token}`, 'User-Agent': 'ClassmateHub-StorageEngine' },
+  })
+  if (!response.ok || !response.body) throw new Error(`Failed to download file from GitHub (${response.status})`)
+  return response
+}
+
+export interface GithubFileStream {
+  stream: ReadableStream<Uint8Array>
+  /** Exact byte length when known (always known for split uploads). */
+  size: number | null
+  fileName: string | null
+}
+
+/**
+ * Streams a stored file part by part, so files of any size are served
+ * without holding the whole thing in function memory.
+ */
+export async function openGithubFileStream(baseKey: string): Promise<GithubFileStream> {
+  const manifest = await getGithubManifest(baseKey)
+
+  if (!manifest) {
+    // Legacy single-object upload.
+    const response = await fetchGithubRaw(baseKey)
+    const length = Number(response.headers.get('content-length'))
+    return { stream: response.body!, size: Number.isFinite(length) && length > 0 ? length : null, fileName: null }
+  }
+
+  const parts = [...manifest.chunkKeys]
+  let reader: ReadableStreamDefaultReader<Uint8Array> | null = null
+  const stream = new ReadableStream<Uint8Array>({
+    async pull(controller) {
+      while (true) {
+        if (!reader) {
+          const next = parts.shift()
+          if (!next) {
+            controller.close()
+            return
+          }
+          reader = (await fetchGithubRaw(next)).body!.getReader()
+        }
+        const { done, value } = await reader.read()
+        if (done) {
+          reader = null
+          continue
+        }
+        controller.enqueue(value)
+        return
+      }
+    },
+    async cancel(reason) {
+      await reader?.cancel(reason)
+    },
+  })
+  return { stream, size: manifest.fileSize, fileName: manifest.fileName }
+}
+
 export async function downloadFileFromGithub(baseKey: string): Promise<Buffer> {
   const manifest = await getGithubManifest(baseKey)
   const paths = manifest?.chunkKeys || [baseKey]

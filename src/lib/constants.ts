@@ -1,4 +1,10 @@
-export const MAX_FILE_SIZE_BYTES = 100 * 1024 * 1024 // 100MB cap
+/**
+ * Files are stored as 3MB parts plus a manifest (see github-storage.ts), so
+ * GitHub's 100MB-per-file limit doesn't apply. This cap only bounds how long
+ * one upload or download can take.
+ */
+export const MAX_FILE_SIZE_BYTES = 1024 * 1024 * 1024 // 1GB
+export const MAX_FILE_SIZE_LABEL = '1 GB'
 
 export const ALLOWED_FILE_EXTENSIONS = [
   'pdf', 'docx', 'png', 'jpg', 'jpeg',
