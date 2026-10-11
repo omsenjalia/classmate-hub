@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { fetchLiveLabs, MATERIAL_SELECT } from '@/lib/supabase-data'
 import { Lab, Material, MaterialVersion } from '@/lib/types'
-import { MAX_FILE_SIZE_BYTES, ALLOWED_FILE_EXTENSIONS } from '@/lib/constants'
+import { MAX_FILE_SIZE_BYTES, MAX_FILE_SIZE_LABEL, ALLOWED_FILE_EXTENSIONS } from '@/lib/constants'
 import { uploadFileInGithubChunks } from '@/lib/github-upload'
 import { deleteMaterial } from '@/lib/material-actions'
 import { useAppStore } from '@/store/useAppStore'
@@ -161,7 +161,7 @@ export function useMaterialDetail(materialId: string) {
     onProgress?: (percent: number) => void
   ): Promise<boolean> => {
     if (!material || !user || !canManage) return false
-    if (file.size > MAX_FILE_SIZE_BYTES) throw new Error('File must be 100MB or smaller')
+    if (file.size > MAX_FILE_SIZE_BYTES) throw new Error(`File must be ${MAX_FILE_SIZE_LABEL} or smaller`)
     if (
       !ALLOWED_FILE_EXTENSIONS.some((extension) =>
         file.name.toLowerCase().endsWith(`.${extension}`)

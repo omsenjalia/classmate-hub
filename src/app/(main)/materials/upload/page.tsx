@@ -4,7 +4,7 @@ import { Suspense, useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { FileArrowUpIcon, LinkIcon, LockKeyIcon, XIcon } from '@phosphor-icons/react/dist/ssr'
 import toast from 'react-hot-toast'
-import { ALLOWED_FILE_EXTENSIONS, MAX_FILE_SIZE_BYTES } from '@/lib/constants'
+import { ALLOWED_FILE_EXTENSIONS, MAX_FILE_SIZE_BYTES, MAX_FILE_SIZE_LABEL } from '@/lib/constants'
 import { cn, formatBytes, getFileTypeFromName, parseTags } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { fetchLiveLabs } from '@/lib/supabase-data'
@@ -33,7 +33,7 @@ function validateFile(file: File): string | null {
   if (!ALLOWED_FILE_EXTENSIONS.includes(ext)) {
     return `.${ext || '?'} files aren't supported. Use PDF, DOCX, images, code or ZIP.`
   }
-  if (file.size > MAX_FILE_SIZE_BYTES) return 'Files must be 100 MB or smaller.'
+  if (file.size > MAX_FILE_SIZE_BYTES) return `Files must be ${MAX_FILE_SIZE_LABEL} or smaller.`
   return null
 }
 
@@ -202,7 +202,7 @@ function UploadForm() {
               </span>
               <span className="text-[15px] font-medium">Choose a file</span>
               <span id="file-help" className="text-sm text-muted">
-                PDF, DOCX, images, code or ZIP, up to 100 MB
+                PDF, DOCX, images, code or ZIP, up to {MAX_FILE_SIZE_LABEL}
               </span>
             </button>
           )}
